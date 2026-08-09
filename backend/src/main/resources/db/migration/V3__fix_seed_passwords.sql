@@ -1,0 +1,2 @@
+UPDATE users SET password_hash = '$2a$10$/3rxMZ/G/z0QRxbNfVdbIu7juFPMc5cKstiguFOelSLUIOEwjrWM2'
+WHERE email IN ('dispatcher@keystone.com', 'technician@keystone.com', 'manager@keystone.com', 'customer@keystone.com');
