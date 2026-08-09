@@ -17,21 +17,23 @@ import java.time.LocalDateTime;
 @Service
 public class WorkOrderService {
 
-    private final WorkOrderRepository workOrderRepository;
-    private final CustomerRepository customerRepository;
-    private final SiteRepository siteRepository;
-    private final WorkOrderCodeGenerator codeGenerator;
+   private final WorkOrderRepository workOrderRepository;
+private final CustomerRepository customerRepository;
+private final SiteRepository siteRepository;
+private final WorkOrderCodeGenerator codeGenerator;
+private final com.FieldServiceManagement.repository.UserRepository userRepository;
 
-    public WorkOrderService(WorkOrderRepository workOrderRepository,
-                             CustomerRepository customerRepository,
-                             SiteRepository siteRepository,
-                             WorkOrderCodeGenerator codeGenerator) {
-        this.workOrderRepository = workOrderRepository;
-        this.customerRepository = customerRepository;
-        this.siteRepository = siteRepository;
-        this.codeGenerator = codeGenerator;
-    }
-
+public WorkOrderService(WorkOrderRepository workOrderRepository,
+                         CustomerRepository customerRepository,
+                         SiteRepository siteRepository,
+                         WorkOrderCodeGenerator codeGenerator,
+                         com.FieldServiceManagement.repository.UserRepository userRepository) {
+    this.workOrderRepository = workOrderRepository;
+    this.customerRepository = customerRepository;
+    this.siteRepository = siteRepository;
+    this.codeGenerator = codeGenerator;
+    this.userRepository = userRepository;
+}
     public WorkOrderResponse create(WorkOrderRequest request) {
         Customer customer = customerRepository.findById(request.getCustomerId())
                 .orElseThrow(() -> new RuntimeException("Customer not found: " + request.getCustomerId()));
@@ -103,4 +105,22 @@ public class WorkOrderService {
                 wo.getUpdatedAt()
         );
     }
+    public WorkOrderResponse assign(Long workOrderId, Long technicianId) {
+    WorkOrder wo = workOrderRepository.findById(workOrderId)
+            .orElseThrow(() -> new RuntimeException("Work order not found: " + workOrderId));
+
+    if (!wo.getStatus().equals("NEW") && !wo.getStatus().equals("ASSIGNED")) {
+        throw new RuntimeException("Cannot assign a work order in status: " + wo.getStatus());
+    }
+
+    var technician = userRepository.findById(technicianId)
+            .orElseThrow(() -> new RuntimeException("Technician not found: " + technicianId));
+
+    wo.setAssignedTo(technician);
+    wo.setStatus("ASSIGNED");
+    wo.setUpdatedAt(java.time.LocalDateTime.now());
+
+    WorkOrder saved = workOrderRepository.save(wo);
+    return toResponse(saved);
+}
 }

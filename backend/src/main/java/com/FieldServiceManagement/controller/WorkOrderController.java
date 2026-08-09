@@ -1,5 +1,5 @@
 package com.FieldServiceManagement.controller;
-
+import com.FieldServiceManagement.dto.AssignRequest;
 import com.FieldServiceManagement.dto.WorkOrderRequest;
 import com.FieldServiceManagement.dto.WorkOrderResponse;
 import com.FieldServiceManagement.service.WorkOrderService;
@@ -43,4 +43,9 @@ public class WorkOrderController {
     public ResponseEntity<WorkOrderResponse> update(@PathVariable Long id, @Valid @RequestBody WorkOrderRequest request) {
         return ResponseEntity.ok(workOrderService.update(id, request));
     }
+    @PostMapping("/{id}/assign")
+@PreAuthorize("hasAnyRole('DISPATCHER', 'MANAGER')")
+public ResponseEntity<WorkOrderResponse> assign(@PathVariable Long id, @Valid @RequestBody AssignRequest request) {
+    return ResponseEntity.ok(workOrderService.assign(id, request.getTechnicianId()));
+}
 }
