@@ -23,4 +23,5 @@ public class WorkOrderResponse {
     private String assignedToName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String slaStatus;
 }
