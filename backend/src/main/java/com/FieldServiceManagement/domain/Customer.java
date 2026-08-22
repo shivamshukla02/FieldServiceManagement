@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-
+import com.FieldServiceManagement.domain.Organization;
 import java.time.LocalDateTime;
 
 @Entity
@@ -15,6 +15,10 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Customer {
+
+    @ManyToOne(fetch = FetchType.LAZY)
+@JoinColumn(name = "organization_id")
+private Organization organization;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

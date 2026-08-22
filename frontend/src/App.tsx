@@ -1,3 +1,4 @@
+import Register from './pages/Register';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
@@ -11,6 +12,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function AppRoutes() {
   return (
     <Routes>
+      <Route path="/register" element={<Register />} />
       <Route path="/login" element={<Login />} />
       <Route path="/work-orders" element={<ProtectedRoute><WorkOrderList /></ProtectedRoute>} />
       <Route path="/" element={<Navigate to="/work-orders" />} />

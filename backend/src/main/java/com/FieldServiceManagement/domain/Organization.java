@@ -9,30 +9,22 @@ import com.FieldServiceManagement.domain.Organization;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "sites")
+@Table(name = "organizations")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Site {
-
-    @ManyToOne(fetch = FetchType.LAZY)
-@JoinColumn(name = "organization_id")
-private Organization organization;
+public class Organization {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_id", nullable = false)
-    private Customer customer;
-
-    @Column(nullable = false, length = 150)
+    @Column(nullable = false, length = 200)
     private String name;
 
-    @Column(length = 255)
-    private String address;
+    @Column(name = "invite_code", nullable = false, unique = true, length = 20)
+    private String inviteCode;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
