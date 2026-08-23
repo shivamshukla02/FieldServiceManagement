@@ -18,8 +18,15 @@ export default function Login() {
     setLoading(true);
     try {
       const res = await client.post('/auth/login', { email, password });
-      login(res.data.token, res.data.email, res.data.role);
-      navigate('/work-orders');
+login(
+  res.data.token,
+  res.data.email,
+  res.data.role,
+  res.data.organizationId?.toString(),
+  res.data.organizationName,
+  res.data.inviteCode
+);
+navigate('/work-orders');
     } catch {
       setError('Invalid email or password');
     } finally {
