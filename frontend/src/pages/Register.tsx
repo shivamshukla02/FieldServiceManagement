@@ -1,4 +1,3 @@
-do the same for Register.tsx and give me full code
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import client from '../api/client';
@@ -89,7 +88,7 @@ export default function Register() {
   return (
     <div style={{
       minHeight: '100vh', width: '100%',
-      background: `url('/bg-image.png') center/cover no-repeat, linear-gradient(135deg, #dbeafe 0%, #f3e8ff 50%, #ffedd5 100%)`,
+      background: `url('/file_000000004cac81f5a10bbf4f82e864f8.png') center/cover no-repeat, #e0e7ff`,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
       padding: 20, boxSizing: 'border-box'
