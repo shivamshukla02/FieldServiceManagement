@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import client from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import registerBg from '../assets/register-bg.png';
 
 const ROLES = [
-  { value: 'MANAGER', label: 'Manager', desc: 'Create workspace, manage team and all reports', icon: '👔', color: 'rgba(102,126,234,0.6)' },
-  { value: 'DISPATCHER', label: 'Dispatcher', desc: 'Create and assign work orders to field technicians', icon: '📋', color: 'rgba(240,147,43,0.6)' },
-  { value: 'TECHNICIAN', label: 'Technician', desc: 'View and update your assigned field jobs', icon: '🔧', color: 'rgba(34,197,94,0.6)' },
-  { value: 'CUSTOMER', label: 'Customer', desc: 'Raise requests and track their status', icon: '🏢', color: 'rgba(139,92,246,0.6)' },
+  { value: 'MANAGER', label: 'Manager', desc: 'Create workspace, manage team and all reports', icon: '👔' },
+  { value: 'DISPATCHER', label: 'Dispatcher', desc: 'Create and assign work orders to field technicians', icon: '📋' },
+  { value: 'TECHNICIAN', label: 'Technician', desc: 'View and update your assigned field jobs', icon: '🔧' },
+  { value: 'CUSTOMER', label: 'Customer', desc: 'Raise requests and track their status', icon: '🏢' },
 ];
 
 function PasswordStrength({ password }: { password: string }) {
@@ -26,14 +27,14 @@ function PasswordStrength({ password }: { password: string }) {
         {[1,2,3,4].map(i => (
           <div key={i} style={{
             flex: 1, height: 3, borderRadius: 2,
-            background: i <= score ? colors[score-1] : 'rgba(255,255,255,0.1)',
+            background: i <= score ? colors[score-1] : 'rgba(148,163,184,0.25)',
             transition: 'background 0.3s'
           }} />
         ))}
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         {checks.map(c => (
-          <span key={c.label} style={{ fontSize: 11, color: c.pass ? '#22c55e' : 'rgba(255,255,255,0.35)' }}>
+          <span key={c.label} style={{ fontSize: 11, color: c.pass ? '#16a34a' : '#94a3b8' }}>
             {c.pass ? '✓' : '○'} {c.label}
           </span>
         ))}
@@ -60,26 +61,23 @@ export default function Register() {
 
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '13px 16px', boxSizing: 'border-box',
-    background: 'rgba(255,255,255,0.06)',
-    backdropFilter: 'blur(10px)',
-    border: '1px solid rgba(255,255,255,0.12)',
-    borderRadius: 12, color: 'white', fontSize: 14,
+    background: 'rgba(255,255,255,0.8)',
+    border: '1px solid rgba(148,163,184,0.3)',
+    borderRadius: 12, color: '#0f172a', fontSize: 14,
     outline: 'none', fontFamily: 'inherit', transition: 'all 0.2s'
   };
 
   const labelStyle: React.CSSProperties = {
-    display: 'block', color: 'rgba(255,255,255,0.7)',
+    display: 'block', color: '#334155',
     fontSize: 12, fontWeight: 600, marginBottom: 8, letterSpacing: 0.3
   };
 
   const focusInput = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.target.style.borderColor = 'rgba(102,126,234,0.8)';
-    e.target.style.background = 'rgba(102,126,234,0.1)';
-    e.target.style.boxShadow = '0 0 0 3px rgba(102,126,234,0.15)';
+    e.target.style.borderColor = '#6366f1';
+    e.target.style.boxShadow = '0 0 0 3px rgba(99,102,241,0.15)';
   };
   const blurInput = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.target.style.borderColor = 'rgba(255,255,255,0.12)';
-    e.target.style.background = 'rgba(255,255,255,0.06)';
+    e.target.style.borderColor = 'rgba(148,163,184,0.3)';
     e.target.style.boxShadow = 'none';
   };
 
@@ -115,49 +113,50 @@ export default function Register() {
     } finally { setLoading(false); }
   };
 
-  const blobs = [
-    { w: 400, h: 400, top: -120, left: -120, color: 'rgba(102,126,234,0.25)' },
-    { w: 350, h: 350, bottom: -100, right: -100, color: 'rgba(118,75,162,0.25)' },
-    { w: 250, h: 250, top: '30%', right: '10%', color: 'rgba(240,147,43,0.12)' },
-  ];
-
   return (
     <div style={{
-      minHeight: '100vh', width: '100%',
-      background: 'linear-gradient(135deg, #0f0c29 0%, #302b63 40%, #24243e 70%, #0f0c29 100%)',
+      position: 'fixed',
+      top: 0, left: 0,
+      width: '100vw', height: '100vh',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontFamily: "'Segoe UI', sans-serif", position: 'relative', overflow: 'hidden', padding: 20
+      fontFamily: "'Segoe UI', sans-serif",
+      overflow: 'hidden', padding: 20
     }}>
-      {blobs.map((b, i) => (
-        <div key={i} style={{
-          position: 'absolute', width: b.w, height: b.h, borderRadius: '50%',
-          background: b.color, filter: 'blur(80px)',
-          top: b.top, left: b.left, bottom: b.bottom, right: b.right, pointerEvents: 'none'
-        }} />
-      ))}
+      {/* background image layer - stretched to fill exactly, no cropping, no empty space */}
+      <img
+        src={registerBg}
+        alt=""
+        style={{
+          position: 'absolute',
+          top: 0, left: 0,
+          width: '100%', height: '100%',
+          objectFit: 'fill',
+          zIndex: 0
+        }}
+      />
 
-      <div style={{ width: '100%', maxWidth: step === 2 ? 560 : 460, position: 'relative', zIndex: 1 }}>
+      <div style={{ width: '100%', maxWidth: step === 2 ? 560 : 460, position: 'relative', zIndex: 1, maxHeight: '95vh', overflowY: 'auto' }}>
 
-        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             width: 56, height: 56, borderRadius: 16,
-            background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255,255,255,0.2)', marginBottom: 12,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)'
+            background: 'linear-gradient(135deg, #6366f1, #7c3aed)',
+            marginBottom: 12,
+            boxShadow: '0 8px 20px rgba(99,102,241,0.4)'
           }}>
-            <span style={{ fontSize: 24 }}>⚙️</span>
+            <span style={{ fontSize: 24, fontWeight: 700, color: 'white' }}>K</span>
           </div>
-          <h1 style={{ color: 'white', margin: 0, fontSize: 26, fontWeight: 700, letterSpacing: '-0.5px' }}>KEYSTONE</h1>
-          <p style={{ color: 'rgba(255,255,255,0.4)', margin: '4px 0 0', fontSize: 13 }}>Field Service Management Platform</p>
+          <h1 style={{ color: '#0f172a', margin: 0, fontSize: 26, fontWeight: 700, letterSpacing: '-0.5px' }}>KEYSTONE</h1>
+          <p style={{ color: '#475569', margin: '4px 0 0', fontSize: 13 }}>Field Service Management Platform</p>
         </div>
 
         <div style={{
-          background: 'rgba(255,255,255,0.07)',
-          backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)',
-          border: '1px solid rgba(255,255,255,0.13)',
+          background: 'rgba(255,255,255,0.55)',
+          backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)',
+          border: '1px solid rgba(255,255,255,0.6)',
           borderRadius: 24, padding: '36px 32px',
-          boxShadow: '0 32px 64px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.13)'
+          boxShadow: '0 20px 60px rgba(15,23,42,0.15), inset 0 1px 0 rgba(255,255,255,0.6)'
         }}>
 
           {/* step bar */}
@@ -169,19 +168,18 @@ export default function Register() {
                     width: 28, height: 28, borderRadius: '50%',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 11, fontWeight: 700,
-                    background: step > i+1 ? 'rgba(34,197,94,0.8)' : step === i+1
-                      ? 'linear-gradient(135deg, rgba(102,126,234,0.9), rgba(118,75,162,0.9))'
-                      : 'rgba(255,255,255,0.08)',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    color: step >= i+1 ? 'white' : 'rgba(255,255,255,0.3)',
-                    backdropFilter: 'blur(10px)',
-                    boxShadow: step === i+1 ? '0 4px 12px rgba(102,126,234,0.4)' : 'none'
+                    background: step > i+1 ? '#22c55e' : step === i+1
+                      ? 'linear-gradient(135deg, #6366f1, #7c3aed)'
+                      : 'rgba(148,163,184,0.25)',
+                    border: '1px solid rgba(148,163,184,0.3)',
+                    color: step >= i+1 ? 'white' : '#94a3b8',
+                    boxShadow: step === i+1 ? '0 4px 12px rgba(99,102,241,0.4)' : 'none'
                   }}>
                     {step > i+1 ? '✓' : i+1}
                   </div>
-                  <span style={{ fontSize: 12, color: step === i+1 ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.25)' }}>{s}</span>
+                  <span style={{ fontSize: 12, color: step === i+1 ? '#0f172a' : '#94a3b8' }}>{s}</span>
                 </div>
-                {i < 2 && <div style={{ flex: 1, height: 1, margin: '0 8px', background: step > i+1 ? 'rgba(34,197,94,0.5)' : 'rgba(255,255,255,0.1)', transition: 'background 0.3s' }} />}
+                {i < 2 && <div style={{ flex: 1, height: 1, margin: '0 8px', background: step > i+1 ? '#22c55e' : 'rgba(148,163,184,0.3)', transition: 'background 0.3s' }} />}
               </div>
             ))}
           </div>
@@ -189,19 +187,19 @@ export default function Register() {
           {/* step 1 */}
           {step === 1 && (
             <>
-              <h2 style={{ color: 'white', margin: '0 0 4px', fontSize: 20, fontWeight: 600 }}>Create your account</h2>
-              <p style={{ color: 'rgba(255,255,255,0.45)', margin: '0 0 24px', fontSize: 13 }}>Join the KEYSTONE platform</p>
+              <h2 style={{ color: '#0f172a', margin: '0 0 4px', fontSize: 20, fontWeight: 700 }}>Create your account</h2>
+              <p style={{ color: '#64748b', margin: '0 0 24px', fontSize: 13 }}>Join the KEYSTONE platform</p>
               <form onSubmit={handleStep1}>
                 <div style={{ marginBottom: 16 }}>
-                  <label style={labelStyle}>FULL NAME</label>
+                  <label style={labelStyle}>Full name</label>
                   <input value={name} onChange={e => setName(e.target.value)} placeholder="John Smith" style={inputStyle} onFocus={focusInput} onBlur={blurInput} />
                 </div>
                 <div style={{ marginBottom: 16 }}>
-                  <label style={labelStyle}>EMAIL ADDRESS</label>
+                  <label style={labelStyle}>Email address</label>
                   <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@company.com" style={inputStyle} onFocus={focusInput} onBlur={blurInput} />
                 </div>
                 <div style={{ marginBottom: 22 }}>
-                  <label style={labelStyle}>PASSWORD</label>
+                  <label style={labelStyle}>Password</label>
                   <div style={{ position: 'relative' }}>
                     <input type={showPassword ? 'text' : 'password'} value={password}
                       onChange={e => setPassword(e.target.value)}
@@ -210,25 +208,24 @@ export default function Register() {
                       onFocus={focusInput} onBlur={blurInput} />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} style={{
                       position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
-                      background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 16
+                      background: 'none', border: 'none', cursor: 'pointer', fontSize: 16
                     }}>{showPassword ? '🙈' : '👁️'}</button>
                   </div>
                   <PasswordStrength password={password} />
                 </div>
-                {error && <div style={{ background: 'rgba(239,68,68,0.15)', backdropFilter: 'blur(10px)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10, padding: '10px 14px', marginBottom: 16, color: '#fca5a5', fontSize: 13 }}>{error}</div>}
+                {error && <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 10, padding: '10px 14px', marginBottom: 16, color: '#dc2626', fontSize: 13 }}>{error}</div>}
                 <button type="submit" style={{
                   width: '100%', padding: '14px',
-                  background: 'linear-gradient(135deg, rgba(102,126,234,0.9), rgba(118,75,162,0.9))',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255,255,255,0.2)',
+                  background: 'linear-gradient(135deg, #6366f1, #7c3aed)',
+                  border: 'none',
                   borderRadius: 12, color: 'white', fontSize: 15, fontWeight: 600,
                   cursor: 'pointer', fontFamily: 'inherit',
-                  boxShadow: '0 8px 32px rgba(102,126,234,0.4), inset 0 1px 0 rgba(255,255,255,0.2)'
+                  boxShadow: '0 8px 24px rgba(99,102,241,0.35)'
                 }}>Continue →</button>
               </form>
-              <p style={{ textAlign: 'center', marginTop: 20, fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>
+              <p style={{ textAlign: 'center', marginTop: 20, fontSize: 13, color: '#64748b' }}>
                 Already have an account?{' '}
-                <Link to="/login" style={{ color: 'rgba(102,126,234,0.9)', fontWeight: 600, textDecoration: 'none' }}>Sign in</Link>
+                <Link to="/login" style={{ color: '#6366f1', fontWeight: 600, textDecoration: 'none' }}>Sign in</Link>
               </p>
             </>
           )}
@@ -236,27 +233,25 @@ export default function Register() {
           {/* step 2 — role */}
           {step === 2 && (
             <>
-              <h2 style={{ color: 'white', margin: '0 0 4px', fontSize: 20, fontWeight: 600 }}>What's your role?</h2>
-              <p style={{ color: 'rgba(255,255,255,0.45)', margin: '0 0 20px', fontSize: 13 }}>This determines your access level across the platform</p>
+              <h2 style={{ color: '#0f172a', margin: '0 0 4px', fontSize: 20, fontWeight: 700 }}>What's your role?</h2>
+              <p style={{ color: '#64748b', margin: '0 0 20px', fontSize: 13 }}>This determines your access level across the platform</p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 {ROLES.map(r => (
                   <div key={r.value} onClick={() => handleRoleSelect(r.value)} style={{
                     padding: '18px 14px', textAlign: 'center', cursor: 'pointer',
-                    background: 'rgba(255,255,255,0.05)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: 16, transition: 'all 0.2s',
-                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08)'
+                    background: 'rgba(255,255,255,0.7)',
+                    border: '1px solid rgba(148,163,184,0.3)',
+                    borderRadius: 16, transition: 'all 0.2s'
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(102,126,234,0.15)'; e.currentTarget.style.borderColor = 'rgba(102,126,234,0.5)'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(102,126,234,0.2), inset 0 1px 0 rgba(255,255,255,0.1)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'inset 0 1px 0 rgba(255,255,255,0.08)'; }}>
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(99,102,241,0.1)'; e.currentTarget.style.borderColor = '#6366f1'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(99,102,241,0.15)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.7)'; e.currentTarget.style.borderColor = 'rgba(148,163,184,0.3)'; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}>
                     <div style={{ fontSize: 30, marginBottom: 10 }}>{r.icon}</div>
-                    <div style={{ color: 'white', fontWeight: 700, fontSize: 14, marginBottom: 5 }}>{r.label}</div>
-                    <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, lineHeight: 1.5 }}>{r.desc}</div>
+                    <div style={{ color: '#0f172a', fontWeight: 700, fontSize: 14, marginBottom: 5 }}>{r.label}</div>
+                    <div style={{ color: '#64748b', fontSize: 11, lineHeight: 1.5 }}>{r.desc}</div>
                   </div>
                 ))}
               </div>
-              <button onClick={() => setStep(1)} style={{ marginTop: 18, background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 13, padding: 0, fontFamily: 'inherit' }}>← Back</button>
+              <button onClick={() => setStep(1)} style={{ marginTop: 18, background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: 13, padding: 0, fontFamily: 'inherit' }}>← Back</button>
             </>
           )}
 
@@ -266,17 +261,17 @@ export default function Register() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
                 <div style={{
                   width: 48, height: 48, borderRadius: 14,
-                  background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255,255,255,0.15)',
+                  background: 'rgba(99,102,241,0.1)',
+                  border: '1px solid rgba(99,102,241,0.25)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22
                 }}>
                   {ROLES.find(r => r.value === role)?.icon}
                 </div>
                 <div>
-                  <h2 style={{ color: 'white', margin: 0, fontSize: 20, fontWeight: 600 }}>
+                  <h2 style={{ color: '#0f172a', margin: 0, fontSize: 20, fontWeight: 700 }}>
                     {role === 'MANAGER' ? 'Set up your workspace' : role === 'CUSTOMER' ? 'Almost done!' : 'Join your team'}
                   </h2>
-                  <p style={{ color: 'rgba(255,255,255,0.45)', margin: '3px 0 0', fontSize: 13 }}>
+                  <p style={{ color: '#64748b', margin: '3px 0 0', fontSize: 13 }}>
                     {role === 'MANAGER' ? 'Name your organization' : role === 'CUSTOMER' ? 'Your account is ready' : 'Enter your team invite code'}
                   </p>
                 </div>
@@ -285,11 +280,11 @@ export default function Register() {
               <form onSubmit={handleSubmit}>
                 {role === 'MANAGER' && (
                   <div style={{ marginBottom: 20 }}>
-                    <label style={labelStyle}>ORGANIZATION NAME</label>
+                    <label style={labelStyle}>Organization name</label>
                     <input value={organizationName} onChange={e => setOrganizationName(e.target.value)}
                       placeholder="e.g. Apex Facilities Management"
                       style={inputStyle} onFocus={focusInput} onBlur={blurInput} />
-                    <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, marginTop: 8 }}>
+                    <p style={{ color: '#94a3b8', fontSize: 12, marginTop: 8 }}>
                       An invite code will be generated — share it with your team (not customers)
                     </p>
                   </div>
@@ -297,12 +292,12 @@ export default function Register() {
 
                 {(role === 'DISPATCHER' || role === 'TECHNICIAN') && (
                   <div style={{ marginBottom: 20 }}>
-                    <label style={labelStyle}>TEAM INVITE CODE</label>
+                    <label style={labelStyle}>Team invite code</label>
                     <input value={inviteCode} onChange={e => setInviteCode(e.target.value.toUpperCase())}
                       placeholder="KST-XXXX"
                       style={{ ...inputStyle, letterSpacing: 4, fontSize: 18, fontWeight: 700, textAlign: 'center' }}
                       onFocus={focusInput} onBlur={blurInput} />
-                    <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, marginTop: 8, textAlign: 'center' }}>
+                    <p style={{ color: '#94a3b8', fontSize: 12, marginTop: 8, textAlign: 'center' }}>
                       Get this code from your manager
                     </p>
                   </div>
@@ -310,36 +305,35 @@ export default function Register() {
 
                 {role === 'CUSTOMER' && (
                   <div style={{
-                    background: 'rgba(102,126,234,0.1)', backdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(102,126,234,0.25)', borderRadius: 12, padding: '16px',
+                    background: 'rgba(99,102,241,0.08)',
+                    border: '1px solid rgba(99,102,241,0.2)', borderRadius: 12, padding: '16px',
                     marginBottom: 20
                   }}>
-                    <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, margin: 0, lineHeight: 1.6 }}>
+                    <p style={{ color: '#334155', fontSize: 13, margin: 0, lineHeight: 1.6 }}>
                       Your customer account will be created. A service manager will link you to the appropriate workspace when they set up your first job.
                     </p>
                   </div>
                 )}
 
-                {error && <div style={{ background: 'rgba(239,68,68,0.15)', backdropFilter: 'blur(10px)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10, padding: '10px 14px', marginBottom: 16, color: '#fca5a5', fontSize: 13 }}>{error}</div>}
+                {error && <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 10, padding: '10px 14px', marginBottom: 16, color: '#dc2626', fontSize: 13 }}>{error}</div>}
 
                 <button type="submit" disabled={loading} style={{
                   width: '100%', padding: '14px',
-                  background: loading ? 'rgba(255,255,255,0.08)' : 'linear-gradient(135deg, rgba(102,126,234,0.9), rgba(118,75,162,0.9))',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255,255,255,0.2)',
+                  background: loading ? '#c7c9f0' : 'linear-gradient(135deg, #6366f1, #7c3aed)',
+                  border: 'none',
                   borderRadius: 12, color: 'white', fontSize: 15, fontWeight: 600,
                   cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
-                  boxShadow: loading ? 'none' : '0 8px 32px rgba(102,126,234,0.4), inset 0 1px 0 rgba(255,255,255,0.2)'
+                  boxShadow: loading ? 'none' : '0 8px 24px rgba(99,102,241,0.35)'
                 }}>
                   {loading ? 'Creating account...' : 'Create account →'}
                 </button>
               </form>
-              <button onClick={() => setStep(2)} style={{ marginTop: 14, background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 13, padding: 0, fontFamily: 'inherit' }}>← Change role</button>
+              <button onClick={() => setStep(2)} style={{ marginTop: 14, background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: 13, padding: 0, fontFamily: 'inherit' }}>← Change role</button>
             </>
           )}
         </div>
 
-        <p style={{ textAlign: 'center', marginTop: 20, color: 'rgba(255,255,255,0.2)', fontSize: 12 }}>
+        <p style={{ textAlign: 'center', marginTop: 20, color: '#475569', fontSize: 12 }}>
           © 2026 KEYSTONE · Meridian Facilities Management
         </p>
       </div>
