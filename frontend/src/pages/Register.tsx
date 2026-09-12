@@ -1,3 +1,4 @@
+do the same for Register.tsx and give me full code
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import client from '../api/client';
