@@ -32,7 +32,7 @@ export default function Login() {
   return (
     <div style={{
       minHeight: '100vh', width: '100%',
-      backgroundImage: `linear-gradient(135deg, rgba(15,12,41,0.75) 0%, rgba(48,43,99,0.7) 40%, rgba(36,36,62,0.75) 70%, rgba(15,12,41,0.8) 100%), url(${loginBg})`,
+      backgroundImage: `linear-gradient(135deg, rgba(15,12,41,0.15) 0%, rgba(48,43,99,0.1) 40%, rgba(36,36,62,0.15) 70%, rgba(15,12,41,0.2) 100%), url(${loginBg})`,
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
