@@ -59,6 +59,7 @@ interface Site {
 }
 
 interface PartRow {
+  id?: number;
   sku: string;
   name: string;
   unitCost: number;
@@ -69,14 +70,16 @@ interface PartRow {
 type Page = 'dashboard' | 'workorders' | 'customers' | 'sites' | 'sla' | 'timelogs' | 'parts' | 'team' | 'wo-detail';
 
 const TERMINAL_STATUSES = ['CLOSED', 'CANCELLED'];
+const KEYSTONE_STYLES = ".ks-shell {\n  --ks-page-bg: radial-gradient(circle at 8% -12%, #dbe6ff 0%, transparent 38%), radial-gradient(circle at 96% 8%, #f8e6f2 0%, transparent 34%), linear-gradient(135deg, #f3f6fb 0%, #eef2f8 52%, #e8edf5 100%);\n  --ks-card: rgba(255,255,255,0.68); --ks-inset: rgba(255,255,255,0.44); --ks-button: rgba(255,255,255,0.52); --ks-input: rgba(255,255,255,0.34); --ks-modal: rgba(255,255,255,0.86); --ks-sidebar: rgba(255,255,255,0.58); --ks-topbar: rgba(255,255,255,0.52);\n  --ks-text: #1d2940; --ks-body: #52627b; --ks-subtle: #71819a; --ks-muted: #8d9bb0; --ks-muted-2: #95a4b8; --ks-body-muted: #708198;\n  --ks-accent: #5c66d8; --ks-accent-2: #8874d6; --ks-info: #3d78c9; --ks-success: #2e986f; --ks-success-strong: #2e986f; --ks-warning: #ad7725; --ks-warning-strong: #bd6d35; --ks-danger: #d95f6d; --ks-danger-strong: #c94c59; --ks-purple: #7656c8;\n  --ks-info-bg: #e7f0ff; --ks-warning-bg: #fff4d7; --ks-success-bg: #def6e9; --ks-orange-bg: #fff0e3; --ks-purple-bg: #f0eaff; --ks-neutral-bg: #edf1f6; --ks-danger-bg: #ffe4e7; --ks-current-bg: #e4e9f0;\n  color: var(--ks-text); color-scheme: light;\n}\n.ks-shell[data-ks-theme=\"dark\"] {\n  --ks-page-bg: radial-gradient(circle at 8% -12%, #202d54 0%, transparent 38%), radial-gradient(circle at 96% 8%, #35233f 0%, transparent 34%), linear-gradient(135deg, #0d1422 0%, #131b2b 52%, #111827 100%);\n  --ks-card: rgba(30,41,59,0.72); --ks-inset: rgba(15,23,42,0.42); --ks-button: rgba(51,65,85,0.7); --ks-input: rgba(30,41,59,0.68); --ks-modal: rgba(24,34,51,0.96); --ks-sidebar: rgba(15,23,42,0.74); --ks-topbar: rgba(15,23,42,0.7);\n  --ks-text: #f3f6fb; --ks-body: #c1ccdc; --ks-subtle: #a6b3c7; --ks-muted: #8d9bb1; --ks-muted-2: #8897ad; --ks-body-muted: #a0aec2;\n  --ks-accent: #aab2ff; --ks-accent-2: #c1a6ff; --ks-info: #8dbdff; --ks-success: #72ddb3; --ks-success-strong: #72ddb3; --ks-warning: #f0c778; --ks-warning-strong: #f1a26d; --ks-danger: #ff929d; --ks-danger-strong: #ff8994; --ks-purple: #c5a8ff;\n  --ks-info-bg: rgba(74,125,196,0.24); --ks-warning-bg: rgba(183,128,36,0.24); --ks-success-bg: rgba(46,152,111,0.24); --ks-orange-bg: rgba(189,109,53,0.24); --ks-purple-bg: rgba(118,86,200,0.24); --ks-neutral-bg: rgba(100,116,139,0.24); --ks-danger-bg: rgba(201,76,89,0.24); --ks-current-bg: rgba(100,116,139,0.24);\n  color-scheme: dark;\n}\n.ks-shell *, .ks-shell *::before, .ks-shell *::after { box-sizing: border-box; }\n.ks-shell button, .ks-shell input, .ks-shell textarea, .ks-shell select { transition: border-color .18s ease, box-shadow .18s ease, background .18s ease, transform .18s ease, opacity .18s ease; }\n.ks-shell button:focus-visible, .ks-shell input:focus-visible, .ks-shell textarea:focus-visible, .ks-shell select:focus-visible { outline: 2px solid var(--ks-accent); outline-offset: 2px; }\n.ks-shell button:disabled { cursor: not-allowed; }\n.ks-shell input::placeholder, .ks-shell textarea::placeholder { color: var(--ks-muted); opacity: .9; }\n.ks-shell select option { background: var(--ks-modal); color: var(--ks-text); }\n.ks-shell ::-webkit-scrollbar { width: 9px; height: 9px; }\n.ks-shell ::-webkit-scrollbar-thumb { background: rgba(125,140,165,.35); border-radius: 99px; border: 2px solid transparent; background-clip: padding-box; }\n.ks-shell ::-webkit-scrollbar-track { background: transparent; }\n@media (max-width: 900px) { .ks-sidebar { width: 78px !important; padding-left: 9px !important; padding-right: 9px !important; } .ks-sidebar button { justify-content: center !important; padding-left: 7px !important; padding-right: 7px !important; } .ks-sidebar button > span:last-child { display: none; } .ks-sidebar > div { text-align: center; padding-left: 0 !important; padding-right: 0 !important; } .ks-content { padding: 18px !important; } .ks-topbar { padding-left: 16px !important; padding-right: 16px !important; } }\n@media (max-width: 640px) { .ks-topbar { height: auto !important; min-height: 62px; padding-top: 10px !important; padding-bottom: 10px !important; flex-wrap: wrap; } .ks-topbar > div:last-child { gap: 7px !important; } .ks-topbar > div:nth-child(3) { display: none; } .ks-topbar .ks-user-email { display: none; } .ks-content { padding: 14px 12px 32px !important; } .ks-content > div { max-width: 100%; } }\n@media (prefers-reduced-motion: reduce) { .ks-shell *, .ks-shell *::before, .ks-shell *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; } }";
+
 
 // Hybrid glassmorphism + neomorphism, tuned for maximum visible effect: a vivid
 // multi-tone animated backdrop, heavily frosted (~80% glass) translucent panels with
 // glowing borders, and pronounced soft-shadow neomorphic depth.
-const PAGE_BG = 'radial-gradient(circle at 10% -10%, #c7d9ff 0%, transparent 40%), radial-gradient(circle at 90% 10%, #ffd6ec 0%, transparent 42%), radial-gradient(circle at 100% 90%, #c9f7e3 0%, transparent 45%), radial-gradient(circle at 0% 100%, #fde7c8 0%, transparent 40%), linear-gradient(135deg, #eef2ff 0%, #fbeeff 45%, #eafff5 100%)';
+const PAGE_BG = 'var(--ks-page-bg)';
 
 const cardStyle: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.62)',
+  background: 'var(--ks-card)',
   backdropFilter: 'blur(30px) saturate(190%)',
   WebkitBackdropFilter: 'blur(30px) saturate(190%)',
   border: '1px solid rgba(255,255,255,0.85)',
@@ -85,7 +88,7 @@ const cardStyle: React.CSSProperties = {
 };
 
 const insetStyle: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.4)',
+  background: 'var(--ks-inset)',
   backdropFilter: 'blur(18px) saturate(190%)',
   WebkitBackdropFilter: 'blur(18px) saturate(190%)',
   border: '1px solid rgba(255,255,255,0.65)',
@@ -94,7 +97,7 @@ const insetStyle: React.CSSProperties = {
 };
 
 const btnStyle: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.55)',
+  background: 'var(--ks-button)',
   backdropFilter: 'blur(14px) saturate(190%)',
   WebkitBackdropFilter: 'blur(14px) saturate(190%)',
   border: '1px solid rgba(255,255,255,0.8)',
@@ -118,33 +121,33 @@ const NAV_ACCENTS: Record<string, { color: string; bg: string; glow: string }> =
 };
 
 const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
-  NEW: { bg: '#ebf4ff', color: '#3182ce' },
-  ASSIGNED: { bg: '#fef3c7', color: '#d97706' },
-  IN_PROGRESS: { bg: '#dcfce7', color: '#16a34a' },
-  ON_HOLD: { bg: '#fff7ed', color: '#ea580c' },
-  COMPLETED: { bg: '#f3e8ff', color: '#7c3aed' },
-  CLOSED: { bg: '#f1f5f9', color: '#64748b' },
-  CANCELLED: { bg: '#fee2e2', color: '#dc2626' },
+  NEW: { bg: 'var(--ks-info-bg)', color: 'var(--ks-info)' },
+  ASSIGNED: { bg: 'var(--ks-warning-bg)', color: 'var(--ks-warning)' },
+  IN_PROGRESS: { bg: 'var(--ks-success-bg)', color: 'var(--ks-success-strong)' },
+  ON_HOLD: { bg: 'var(--ks-orange-bg)', color: 'var(--ks-warning-strong)' },
+  COMPLETED: { bg: 'var(--ks-purple-bg)', color: 'var(--ks-purple)' },
+  CLOSED: { bg: 'var(--ks-neutral-bg)', color: 'var(--ks-body-muted)' },
+  CANCELLED: { bg: 'var(--ks-danger-bg)', color: 'var(--ks-danger-strong)' },
 };
 
 const PRIORITY_COLORS: Record<string, { bg: string; color: string }> = {
-  URGENT: { bg: '#fee2e2', color: '#dc2626' },
-  HIGH: { bg: '#fff7ed', color: '#ea580c' },
-  MEDIUM: { bg: '#fef3c7', color: '#d97706' },
-  LOW: { bg: '#dcfce7', color: '#16a34a' },
+  URGENT: { bg: 'var(--ks-danger-bg)', color: 'var(--ks-danger-strong)' },
+  HIGH: { bg: 'var(--ks-orange-bg)', color: 'var(--ks-warning-strong)' },
+  MEDIUM: { bg: 'var(--ks-warning-bg)', color: 'var(--ks-warning)' },
+  LOW: { bg: 'var(--ks-success-bg)', color: 'var(--ks-success-strong)' },
 };
 
 const SLA_COLORS: Record<string, { color: string }> = {
-  'ON_TRACK': { color: '#16a34a' },
-  'AT_RISK': { color: '#d97706' },
-  'BREACHED': { color: '#dc2626' },
-  'N/A': { color: '#94a3b8' },
+  'ON_TRACK': { color: 'var(--ks-success-strong)' },
+  'AT_RISK': { color: 'var(--ks-warning)' },
+  'BREACHED': { color: 'var(--ks-danger-strong)' },
+  'N/A': { color: 'var(--ks-muted-2)' },
 };
 
 const PART_STATUS_COLORS: Record<string, { bg: string; color: string; label: string }> = {
-  IN_STOCK: { bg: '#dcfce7', color: '#16a34a', label: 'In Stock' },
-  LOW_STOCK: { bg: '#fef3c7', color: '#d97706', label: 'Low Stock' },
-  OUT_OF_STOCK: { bg: '#fee2e2', color: '#dc2626', label: 'Out of Stock' },
+  IN_STOCK: { bg: 'var(--ks-success-bg)', color: 'var(--ks-success-strong)', label: 'In Stock' },
+  LOW_STOCK: { bg: 'var(--ks-warning-bg)', color: 'var(--ks-warning)', label: 'Low Stock' },
+  OUT_OF_STOCK: { bg: 'var(--ks-danger-bg)', color: 'var(--ks-danger-strong)', label: 'Out of Stock' },
 };
 
 function Pill({ text, bg, color }: { text: string; bg: string; color: string }) {
@@ -159,17 +162,17 @@ function Pill({ text, bg, color }: { text: string; bg: string; color: string }) 
 }
 
 function StatusPill({ status }: { status: string }) {
-  const c = STATUS_COLORS[status] || { bg: '#f1f5f9', color: '#64748b' };
+  const c = STATUS_COLORS[status] || { bg: 'var(--ks-neutral-bg)', color: 'var(--ks-body-muted)' };
   return <Pill text={status.replace('_', ' ')} bg={c.bg} color={c.color} />;
 }
 
 function PriorityPill({ priority }: { priority: string }) {
-  const c = PRIORITY_COLORS[priority] || { bg: '#f1f5f9', color: '#64748b' };
+  const c = PRIORITY_COLORS[priority] || { bg: 'var(--ks-neutral-bg)', color: 'var(--ks-body-muted)' };
   return <Pill text={priority} bg={c.bg} color={c.color} />;
 }
 
 function SlaText({ slaStatus }: { slaStatus: string }) {
-  const c = SLA_COLORS[slaStatus] || { color: '#94a3b8' };
+  const c = SLA_COLORS[slaStatus] || { color: 'var(--ks-muted-2)' };
   return <span style={{ fontSize: 12, fontWeight: 700, color: c.color }}>{slaStatus?.replace('_', ' ') || 'N/A'}</span>;
 }
 
@@ -195,6 +198,14 @@ function extractErrorMessage(e: any, fallback: string): string {
 export default function WorkOrderList() {
   const { email, role, organizationName, inviteCode, logout } = useAuth();
   const [page, setPage] = useState<Page>('dashboard');
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window === 'undefined') return 'light';
+    try {
+      return (localStorage.getItem('keystone-theme') as 'light' | 'dark') || 'light';
+    } catch {
+      return 'light';
+    }
+  });
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [selectedWO, setSelectedWO] = useState<WorkOrder | null>(null);
@@ -217,10 +228,15 @@ export default function WorkOrderList() {
   const [custForm, setCustForm] = useState({ name: '', contactEmail: '' });
   const [siteForm, setSiteForm] = useState({ customerId: '', name: '', address: '' });
   const [showCreatePart, setShowCreatePart] = useState(false);
+  const [partToDelete, setPartToDelete] = useState<PartRow | null>(null);
+  const [deletingPart, setDeletingPart] = useState(false);
   const [partForm, setPartForm] = useState({ sku: '', name: '', unitCost: '', stockQty: '' });
   const [siteCustomerFilter, setSiteCustomerFilter] = useState<string>('all');
 
   useEffect(() => { loadDashboard(); loadAllCustomersAndSitesForForms(); }, []);
+  useEffect(() => {
+    try { localStorage.setItem('keystone-theme', theme); } catch { /* storage can be unavailable in private browsing */ }
+  }, [theme]);
 
   const setLoad = (key: string, val: boolean) => setLoading(prev => ({ ...prev, [key]: val }));
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
@@ -415,6 +431,23 @@ export default function WorkOrderList() {
     }
   };
 
+  const deletePart = async () => {
+    if (!partToDelete) return;
+    setDeletingPart(true);
+    try {
+      const identifier = partToDelete.id ?? encodeURIComponent(partToDelete.sku);
+      await client.delete(`/parts/inventory/${identifier}`);
+      setPartsInventory(prev => prev.filter(part => part.id !== partToDelete.id && part.sku !== partToDelete.sku));
+      setPartToDelete(null);
+      showToast('Part deleted successfully');
+    } catch (e) {
+      console.error(e);
+      showToast(extractErrorMessage(e, 'Failed to delete part'));
+    } finally {
+      setDeletingPart(false);
+    }
+  };
+
   const copyInvite = () => {
     if (inviteCode && navigator.clipboard?.writeText) {
       navigator.clipboard.writeText(inviteCode)
@@ -440,8 +473,8 @@ export default function WorkOrderList() {
 
   const neuInput: React.CSSProperties = {
     width: '100%', padding: '11px 14px', border: '1px solid rgba(255,255,255,0.5)', outline: 'none',
-    background: 'rgba(255,255,255,0.3)', backdropFilter: 'blur(10px) saturate(160%)', WebkitBackdropFilter: 'blur(10px) saturate(160%)',
-    fontFamily: 'inherit', fontSize: 14, color: '#2d3748',
+    background: 'var(--ks-input)', backdropFilter: 'blur(10px) saturate(160%)', WebkitBackdropFilter: 'blur(10px) saturate(160%)',
+    fontFamily: 'inherit', fontSize: 14, color: 'var(--ks-text)',
     borderRadius: 12,
     boxShadow: 'inset 3px 3px 7px rgba(163,177,198,0.4), inset -2px -2px 5px rgba(255,255,255,0.7)',
     boxSizing: 'border-box' as const,
@@ -475,7 +508,7 @@ export default function WorkOrderList() {
           fontWeight: lit ? 700 : 500,
           background: lit
             ? `linear-gradient(135deg, ${accent.bg}, rgba(255,255,255,0.6))`
-            : 'rgba(255,255,255,0.4)',
+            : 'var(--ks-inset)',
           backdropFilter: 'blur(12px) saturate(190%)',
           WebkitBackdropFilter: 'blur(12px) saturate(190%)',
           boxShadow: active
@@ -499,14 +532,14 @@ export default function WorkOrderList() {
 
   const SectionLabel = ({ children }: { children: React.ReactNode }) => (
     <div style={{
-      fontSize: 10, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase',
+      fontSize: 10, fontWeight: 800, color: 'var(--ks-muted-2)', textTransform: 'uppercase',
       letterSpacing: 1.1, padding: '14px 10px 6px', marginTop: 4,
     }}>{children}</div>
   );
 
   const Sidebar = () => (
-    <div style={{
-      width: 226, background: 'rgba(255,255,255,0.5)',
+    <div className="ks-sidebar" style={{
+      width: 226, background: 'var(--ks-sidebar)',
       backdropFilter: 'blur(32px) saturate(190%)', WebkitBackdropFilter: 'blur(32px) saturate(190%)',
       borderRight: '1px solid rgba(255,255,255,0.75)',
       flexShrink: 0,
@@ -530,8 +563,8 @@ export default function WorkOrderList() {
 
   // ── TOPBAR ──
   const Topbar = () => (
-    <div style={{
-      height: 62, background: 'rgba(255,255,255,0.45)',
+    <div className="ks-topbar" style={{
+      height: 62, background: 'var(--ks-topbar)',
       backdropFilter: 'blur(28px) saturate(180%)', WebkitBackdropFilter: 'blur(28px) saturate(180%)',
       borderBottom: '1px solid rgba(255,255,255,0.7)',
       flexShrink: 0,
@@ -541,51 +574,59 @@ export default function WorkOrderList() {
     }}>
       <div style={{
         width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-        background: 'linear-gradient(135deg, #667eea, #764ba2)',
+        background: 'linear-gradient(135deg, var(--ks-accent), var(--ks-accent-2))',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         color: 'white', fontSize: 16, fontWeight: 700,
         boxShadow: '3px 3px 8px rgba(163,177,198,0.6), -2px -2px 6px rgba(255,255,255,0.9)',
       }}>K</div>
-      <div style={{ fontSize: 16, fontWeight: 700, color: '#2d3748' }}>KEYSTONE</div>
+      <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--ks-text)' }}>KEYSTONE</div>
       {organizationName && <>
-        <div style={{ color: '#a0aec0', fontSize: 14 }}>·</div>
-        <div style={{ fontSize: 13, color: '#718096' }}>{organizationName}</div>
+        <div style={{ color: 'var(--ks-muted)', fontSize: 14 }}>·</div>
+        <div style={{ fontSize: 13, color: 'var(--ks-subtle)' }}>{organizationName}</div>
       </>}
 
       <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button
+          type="button"
+          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}
+          style={{ ...btnStyle, width: 36, height: 36, padding: 0, fontSize: 16 }}
+        >{theme === 'dark' ? '☀️' : '◐'}</button>
+
         {canSeeInvite && inviteCode && (
           <div style={{ position: 'relative' }}>
             <button onClick={() => setShowInvite(!showInvite)} style={{
-              ...btnStyle, padding: '7px 14px', fontSize: 12, fontWeight: 600, color: '#667eea',
+              ...btnStyle, padding: '7px 14px', fontSize: 12, fontWeight: 600, color: 'var(--ks-accent)',
             }}>🔑 {inviteCode}</button>
 
             {showInvite && (
               <div style={{
                 position: 'absolute', right: 0, top: 48, zIndex: 100,
                 width: 280, padding: 20,
-                background: 'rgba(255,255,255,0.55)',
+                background: 'var(--ks-button)',
                 backdropFilter: 'blur(22px) saturate(170%)', WebkitBackdropFilter: 'blur(22px) saturate(170%)',
                 border: '1px solid rgba(255,255,255,0.7)',
                 borderRadius: 18,
                 boxShadow: '10px 10px 24px rgba(163,177,198,0.5), -6px -6px 14px rgba(255,255,255,0.8)',
               }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#2d3748', marginBottom: 4 }}>Team Invite Code</div>
-                <div style={{ fontSize: 11, color: '#a0aec0', marginBottom: 12 }}>Share with Dispatchers & Technicians only</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ks-text)', marginBottom: 4 }}>Team Invite Code</div>
+                <div style={{ fontSize: 11, color: 'var(--ks-muted)', marginBottom: 12 }}>Share with Dispatchers & Technicians only</div>
                 <div style={{
                   ...insetStyle, padding: '14px 16px', marginBottom: 12,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  <span style={{ fontFamily: 'monospace', fontSize: 22, fontWeight: 800, letterSpacing: 5, color: '#667eea' }}>{inviteCode}</span>
+                  <span style={{ fontFamily: 'monospace', fontSize: 22, fontWeight: 800, letterSpacing: 5, color: 'var(--ks-accent)' }}>{inviteCode}</span>
                 </div>
                 <button onClick={copyInvite} style={{
                   ...btnStyle, width: '100%', padding: '10px',
-                  background: copied ? '#22c55e' : 'linear-gradient(135deg, #667eea, #764ba2)',
+                  background: copied ? '#22c55e' : 'linear-gradient(135deg, var(--ks-accent), var(--ks-accent-2))',
                   color: 'white', fontSize: 13, fontWeight: 700,
                   boxShadow: '4px 4px 12px rgba(102,126,234,0.4)',
                 }}>
                   {copied ? '✓ Copied!' : '📋 Copy Code'}
                 </button>
-                <div style={{ fontSize: 11, color: '#e53e3e', marginTop: 10, fontWeight: 600 }}>⚠️ Never share with customers</div>
+                <div style={{ fontSize: 11, color: 'var(--ks-danger)', marginTop: 10, fontWeight: 600 }}>⚠️ Never share with customers</div>
               </div>
             )}
           </div>
@@ -593,18 +634,18 @@ export default function WorkOrderList() {
 
         <div style={{
           width: 36, height: 36, borderRadius: '50%',
-          background: 'linear-gradient(135deg, #667eea, #764ba2)',
+          background: 'linear-gradient(135deg, var(--ks-accent), var(--ks-accent-2))',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: 'white', fontSize: 13, fontWeight: 700,
           boxShadow: '3px 3px 8px rgba(163,177,198,0.6), -2px -2px 6px rgba(255,255,255,0.9)',
         }}>{email?.charAt(0).toUpperCase()}</div>
 
         <div>
-          <div style={{ fontSize: 12, fontWeight: 600, color: '#2d3748' }}>{email}</div>
-          <div style={{ fontSize: 10, color: '#667eea', fontWeight: 600 }}>{role}</div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ks-text)' }}>{email}</div>
+          <div style={{ fontSize: 10, color: 'var(--ks-accent)', fontWeight: 600 }}>{role}</div>
         </div>
 
-        <button onClick={logout} style={{ ...btnStyle, padding: '7px 14px', fontSize: 12, fontWeight: 600, color: '#e53e3e' }}>Sign out</button>
+        <button onClick={logout} style={{ ...btnStyle, padding: '7px 14px', fontSize: 12, fontWeight: 600, color: 'var(--ks-danger)' }}>Sign out</button>
       </div>
     </div>
   );
@@ -613,8 +654,8 @@ export default function WorkOrderList() {
   const StatCard = ({ icon, label, value, sub, subColor }: { icon: string; label: string; value: number | string; sub: string; subColor: string }) => (
     <div style={{ ...cardStyle, padding: '20px 18px' }}>
       <div style={{ fontSize: 22, marginBottom: 10 }}>{icon}</div>
-      <div style={{ fontSize: 11, color: '#a0aec0', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>{label}</div>
-      <div style={{ fontSize: 28, fontWeight: 700, color: '#2d3748', lineHeight: 1 }}>{value ?? '—'}</div>
+      <div style={{ fontSize: 11, color: 'var(--ks-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--ks-text)', lineHeight: 1 }}>{value ?? '—'}</div>
       <div style={{ fontSize: 11, marginTop: 6, fontWeight: 600, color: subColor }}>{sub}</div>
     </div>
   );
@@ -626,17 +667,17 @@ export default function WorkOrderList() {
         <thead>
           <tr style={{ background: 'rgba(163,177,198,0.1)' }}>
             {cols.map(c => (
-              <th key={c} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: '#a0aec0', textTransform: 'uppercase', letterSpacing: 0.5, whiteSpace: 'nowrap' }}>{c}</th>
+              <th key={c} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: 'var(--ks-muted)', textTransform: 'uppercase', letterSpacing: 0.5, whiteSpace: 'nowrap' }}>{c}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {rows.length === 0 ? (
-            <tr><td colSpan={cols.length} style={{ textAlign: 'center', padding: 40, color: '#a0aec0', fontSize: 13 }}>{empty}</td></tr>
+            <tr><td colSpan={cols.length} style={{ textAlign: 'center', padding: 40, color: 'var(--ks-muted)', fontSize: 13 }}>{empty}</td></tr>
           ) : rows.map((row, i) => (
             <tr key={i} style={{ borderBottom: '1px solid rgba(163,177,198,0.15)' }}>
               {row.map((cell, j) => (
-                <td key={j} style={{ padding: '12px 16px', fontSize: 13, color: '#4a5568' }}>{cell}</td>
+                <td key={j} style={{ padding: '12px 16px', fontSize: 13, color: 'var(--ks-body)' }}>{cell}</td>
               ))}
             </tr>
           ))}
@@ -654,16 +695,16 @@ export default function WorkOrderList() {
     }}>
       <div onClick={e => e.stopPropagation()} style={{
         ...cardStyle, padding: 28, width: '100%', maxWidth: 480,
-        background: 'rgba(255,255,255,0.65)',
+        background: 'var(--ks-modal)',
         boxShadow: '16px 16px 36px rgba(163,177,198,0.55), -8px -8px 20px rgba(255,255,255,0.85)',
       }}>
-        <div style={{ fontSize: 17, fontWeight: 700, color: '#2d3748', marginBottom: 20 }}>{title}</div>
+        <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--ks-text)', marginBottom: 20 }}>{title}</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>{children}</div>
         <div style={{ display: 'flex', gap: 10, marginTop: 20, justifyContent: 'flex-end' }}>
-          <button onClick={onClose} style={{ ...btnStyle, padding: '9px 18px', fontSize: 13, fontWeight: 600, color: '#718096' }}>Cancel</button>
+          <button onClick={onClose} style={{ ...btnStyle, padding: '9px 18px', fontSize: 13, fontWeight: 600, color: 'var(--ks-subtle)' }}>Cancel</button>
           <button onClick={onSubmit} style={{
             ...btnStyle, padding: '9px 18px', fontSize: 13, fontWeight: 700,
-            background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white',
+            background: 'linear-gradient(135deg, var(--ks-accent), var(--ks-accent-2))', color: 'white',
             boxShadow: '4px 4px 12px rgba(102,126,234,0.4)',
           }}>Submit</button>
         </div>
@@ -672,56 +713,57 @@ export default function WorkOrderList() {
   );
 
   const FieldLabel = ({ children }: { children: React.ReactNode }) => (
-    <label style={{ fontSize: 12, fontWeight: 600, color: '#718096', marginBottom: 7, display: 'block' }}>{children}</label>
+    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--ks-subtle)', marginBottom: 7, display: 'block' }}>{children}</label>
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100%', background: PAGE_BG, fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+    <div className="ks-shell" data-ks-theme={theme} style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100%', background: PAGE_BG, fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+      <style>{KEYSTONE_STYLES}</style>
       <Topbar />
 
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <Sidebar />
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
+        <div className="ks-content" style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
 
           {/* ── DASHBOARD ── */}
           {page === 'dashboard' && (
             <>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
                 <div>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: '#2d3748' }}>Dashboard</div>
-                  <div style={{ fontSize: 13, color: '#a0aec0', marginTop: 3 }}>Good morning — here's what's happening today</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--ks-text)' }}>Dashboard</div>
+                  <div style={{ fontSize: 13, color: 'var(--ks-muted)', marginTop: 3 }}>Good morning — here's what's happening today</div>
                 </div>
                 <button onClick={() => setShowCreateWO(true)} style={{
                   ...btnStyle, padding: '10px 18px', fontSize: 13, fontWeight: 700,
-                  background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white',
+                  background: 'linear-gradient(135deg, var(--ks-accent), var(--ks-accent-2))', color: 'white',
                   boxShadow: '4px 4px 12px rgba(102,126,234,0.4)',
                 }}>+ New Work Order</button>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 20 }}>
-                <StatCard icon="📋" label="Total Open" value={(summary?.newCount||0)+(summary?.assignedCount||0)+(summary?.inProgressCount||0)+(summary?.onHoldCount||0)} sub="Across all statuses" subColor="#38a169" />
-                <StatCard icon="⚡" label="In Progress" value={summary?.inProgressCount??'—'} sub="Active now" subColor="#38a169" />
-                <StatCard icon="🚨" label="SLA Breached" value={summary?.breachedCount??'—'} sub={(summary?.breachedCount||0)===0?'All clear ✓':'Needs action'} subColor={(summary?.breachedCount||0)===0?'#38a169':'#e53e3e'} />
-                <StatCard icon="✅" label="Closed" value={summary?.closedCount??'—'} sub="Completed" subColor="#38a169" />
+                <StatCard icon="📋" label="Total Open" value={(summary?.newCount||0)+(summary?.assignedCount||0)+(summary?.inProgressCount||0)+(summary?.onHoldCount||0)} sub="Across all statuses" subColor="var(--ks-success)" />
+                <StatCard icon="⚡" label="In Progress" value={summary?.inProgressCount??'—'} sub="Active now" subColor="var(--ks-success)" />
+                <StatCard icon="🚨" label="SLA Breached" value={summary?.breachedCount??'—'} sub={(summary?.breachedCount||0)===0?'All clear ✓':'Needs action'} subColor={(summary?.breachedCount||0)===0?'var(--ks-success)':'var(--ks-danger)'} />
+                <StatCard icon="✅" label="Closed" value={summary?.closedCount??'—'} sub="Completed" subColor="var(--ks-success)" />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
-                <StatCard icon="🟡" label="On Hold" value={summary?.onHoldCount??'—'} sub="Awaiting action" subColor="#d97706" />
-                <StatCard icon="⚠️" label="SLA At Risk" value={summary?.atRiskCount??'—'} sub="Monitor closely" subColor="#d97706" />
+                <StatCard icon="🟡" label="On Hold" value={summary?.onHoldCount??'—'} sub="Awaiting action" subColor="var(--ks-warning)" />
+                <StatCard icon="⚠️" label="SLA At Risk" value={summary?.atRiskCount??'—'} sub="Monitor closely" subColor="var(--ks-warning)" />
               </div>
 
               <div style={{ ...cardStyle, overflow: 'hidden' }}>
                 <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(163,177,198,0.2)' }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#2d3748' }}>Recent Work Orders</div>
-                  <button onClick={() => navTo('workorders')} style={{ ...btnStyle, padding: '6px 12px', fontSize: 12, color: '#667eea', fontWeight: 600 }}>View all →</button>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ks-text)' }}>Recent Work Orders</div>
+                  <button onClick={() => navTo('workorders')} style={{ ...btnStyle, padding: '6px 12px', fontSize: 12, color: 'var(--ks-accent)', fontWeight: 600 }}>View all →</button>
                 </div>
                 <Table
                   cols={['Code', 'Title', 'Status', 'Priority', 'SLA']}
                   empty={loading.dashboard ? 'Loading…' : 'No work orders yet'}
                   rows={workOrders.slice(0,5).map(w => [
-                    <span style={{ fontFamily: 'monospace', color: '#667eea', fontSize: 12, fontWeight: 700 }}>{w.code}</span>,
-                    <span style={{ fontWeight: 600, color: '#2d3748', cursor: 'pointer' }} onClick={() => openWODetail(w)}>{w.title}</span>,
+                    <span style={{ fontFamily: 'monospace', color: 'var(--ks-accent)', fontSize: 12, fontWeight: 700 }}>{w.code}</span>,
+                    <span style={{ fontWeight: 600, color: 'var(--ks-text)', cursor: 'pointer' }} onClick={() => openWODetail(w)}>{w.title}</span>,
                     <StatusPill status={w.status} />,
                     <PriorityPill priority={w.priority} />,
                     <SlaText slaStatus={w.slaStatus} />,
@@ -736,14 +778,14 @@ export default function WorkOrderList() {
             <>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
                 <div>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: '#2d3748' }}>Work Orders</div>
-                  <div style={{ fontSize: 13, color: '#a0aec0', marginTop: 3 }}>{workOrders.length} total in your workspace</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--ks-text)' }}>Work Orders</div>
+                  <div style={{ fontSize: 13, color: 'var(--ks-muted)', marginTop: 3 }}>{workOrders.length} total in your workspace</div>
                 </div>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                   <input value={woSearch} onChange={e => setWoSearch(e.target.value)} placeholder="🔍 Search..." style={{ ...neuInput, width: 220 }} />
                   <button onClick={() => setShowCreateWO(true)} style={{
                     ...btnStyle, padding: '10px 18px', fontSize: 13, fontWeight: 700,
-                    background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white',
+                    background: 'linear-gradient(135deg, var(--ks-accent), var(--ks-accent-2))', color: 'white',
                     boxShadow: '4px 4px 12px rgba(102,126,234,0.4)',
                   }}>+ New</button>
                 </div>
@@ -753,14 +795,14 @@ export default function WorkOrderList() {
                   cols={['Code', 'Title', 'Status', 'Priority', 'SLA', 'Customer', 'Site', 'Assigned To']}
                   empty={loading.workorders ? 'Loading…' : 'No work orders found'}
                   rows={filteredWO.map(w => [
-                    <span style={{ fontFamily: 'monospace', color: '#667eea', fontSize: 12, fontWeight: 700 }}>{w.code}</span>,
-                    <span style={{ fontWeight: 600, color: '#667eea', cursor: 'pointer', maxWidth: 200, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} onClick={() => openWODetail(w)}>{w.title}</span>,
+                    <span style={{ fontFamily: 'monospace', color: 'var(--ks-accent)', fontSize: 12, fontWeight: 700 }}>{w.code}</span>,
+                    <span style={{ fontWeight: 600, color: 'var(--ks-accent)', cursor: 'pointer', maxWidth: 200, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} onClick={() => openWODetail(w)}>{w.title}</span>,
                     <StatusPill status={w.status} />,
                     <PriorityPill priority={w.priority} />,
                     <SlaText slaStatus={w.slaStatus} />,
                     w.customerName || '—',
                     w.siteName || '—',
-                    w.assignedToName || <span style={{ color: '#a0aec0' }}>Unassigned</span>,
+                    w.assignedToName || <span style={{ color: 'var(--ks-muted)' }}>Unassigned</span>,
                   ])}
                 />
               </div>
@@ -772,18 +814,18 @@ export default function WorkOrderList() {
             <>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
                 <div>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: '#2d3748' }}>Customers</div>
-                  <div style={{ fontSize: 13, color: '#a0aec0', marginTop: 3 }}>Manage client organizations</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--ks-text)' }}>Customers</div>
+                  <div style={{ fontSize: 13, color: 'var(--ks-muted)', marginTop: 3 }}>Manage client organizations</div>
                 </div>
-                <button onClick={() => setShowCreateCustomer(true)} style={{ ...btnStyle, padding: '10px 18px', fontSize: 13, fontWeight: 700, background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white', boxShadow: '4px 4px 12px rgba(102,126,234,0.4)' }}>+ Add Customer</button>
+                <button onClick={() => setShowCreateCustomer(true)} style={{ ...btnStyle, padding: '10px 18px', fontSize: 13, fontWeight: 700, background: 'linear-gradient(135deg, var(--ks-accent), var(--ks-accent-2))', color: 'white', boxShadow: '4px 4px 12px rgba(102,126,234,0.4)' }}>+ Add Customer</button>
               </div>
               <div style={{ ...cardStyle, overflow: 'hidden' }}>
                 <Table
                   cols={['ID', 'Name', 'Contact Email', 'Created']}
                   empty={loading.customers ? 'Loading…' : 'No customers yet'}
                   rows={customers.map(c => [
-                    <span style={{ color: '#667eea', fontWeight: 700 }}>#{c.id}</span>,
-                    <span style={{ fontWeight: 600, color: '#2d3748' }}>{c.name}</span>,
+                    <span style={{ color: 'var(--ks-accent)', fontWeight: 700 }}>#{c.id}</span>,
+                    <span style={{ fontWeight: 600, color: 'var(--ks-text)' }}>{c.name}</span>,
                     c.contactEmail || '—',
                     fmt(c.createdAt),
                   ])}
@@ -797,8 +839,8 @@ export default function WorkOrderList() {
             <>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
                 <div>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: '#2d3748' }}>Sites</div>
-                  <div style={{ fontSize: 13, color: '#a0aec0', marginTop: 3 }}>Building locations where work happens</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--ks-text)' }}>Sites</div>
+                  <div style={{ fontSize: 13, color: 'var(--ks-muted)', marginTop: 3 }}>Building locations where work happens</div>
                 </div>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                   <select
@@ -809,7 +851,7 @@ export default function WorkOrderList() {
                     <option value="all">All customers</option>
                     {customers.map(c => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
                   </select>
-                  <button onClick={() => setShowCreateSite(true)} style={{ ...btnStyle, padding: '10px 18px', fontSize: 13, fontWeight: 700, background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white', boxShadow: '4px 4px 12px rgba(102,126,234,0.4)' }}>+ Add Site</button>
+                  <button onClick={() => setShowCreateSite(true)} style={{ ...btnStyle, padding: '10px 18px', fontSize: 13, fontWeight: 700, background: 'linear-gradient(135deg, var(--ks-accent), var(--ks-accent-2))', color: 'white', boxShadow: '4px 4px 12px rgba(102,126,234,0.4)' }}>+ Add Site</button>
                 </div>
               </div>
               <div style={{ ...cardStyle, overflow: 'hidden' }}>
@@ -817,8 +859,8 @@ export default function WorkOrderList() {
                   cols={['ID', 'Name', 'Customer', 'Address']}
                   empty={loading.sites ? 'Loading…' : 'No sites yet'}
                   rows={sites.map(s => [
-                    <span style={{ color: '#667eea', fontWeight: 700 }}>#{s.id}</span>,
-                    <span style={{ fontWeight: 600, color: '#2d3748' }}>{s.name}</span>,
+                    <span style={{ color: 'var(--ks-accent)', fontWeight: 700 }}>#{s.id}</span>,
+                    <span style={{ fontWeight: 600, color: 'var(--ks-text)' }}>{s.name}</span>,
                     s.customerName || '—',
                     s.address || '—',
                   ])}
@@ -830,22 +872,22 @@ export default function WorkOrderList() {
           {/* ── SLA ── */}
           {page === 'sla' && (
             <>
-              <div style={{ fontSize: 20, fontWeight: 700, color: '#2d3748', marginBottom: 4 }}>SLA Tracking</div>
-              <div style={{ fontSize: 13, color: '#a0aec0', marginBottom: 20 }}>Monitor service level compliance</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--ks-text)', marginBottom: 4 }}>SLA Tracking</div>
+              <div style={{ fontSize: 13, color: 'var(--ks-muted)', marginBottom: 20 }}>Monitor service level compliance</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 20 }}>
-                <StatCard icon="🟢" label="On Track" value={((summary?.newCount||0)+(summary?.assignedCount||0)+(summary?.inProgressCount||0)+(summary?.onHoldCount||0))-(summary?.atRiskCount||0)-(summary?.breachedCount||0)} sub="Meeting SLA" subColor="#38a169" />
-                <StatCard icon="🟡" label="At Risk" value={summary?.atRiskCount??'—'} sub="Within 2hrs of breach" subColor="#d97706" />
-                <StatCard icon="🔴" label="Breached" value={summary?.breachedCount??'—'} sub="Past SLA deadline" subColor="#e53e3e" />
+                <StatCard icon="🟢" label="On Track" value={((summary?.newCount||0)+(summary?.assignedCount||0)+(summary?.inProgressCount||0)+(summary?.onHoldCount||0))-(summary?.atRiskCount||0)-(summary?.breachedCount||0)} sub="Meeting SLA" subColor="var(--ks-success)" />
+                <StatCard icon="🟡" label="At Risk" value={summary?.atRiskCount??'—'} sub="Within 2hrs of breach" subColor="var(--ks-warning)" />
+                <StatCard icon="🔴" label="Breached" value={summary?.breachedCount??'—'} sub="Past SLA deadline" subColor="var(--ks-danger)" />
               </div>
               <div style={{ ...cardStyle, overflow: 'hidden' }}>
                 <Table
                   cols={['Code', 'Title', 'Priority', 'SLA Due', 'SLA Status', 'Current Status']}
                   empty={loading.sla ? 'Loading…' : 'No active work orders'}
                   rows={slaOrders.filter(w => !TERMINAL_STATUSES.includes(w.status)).map(w => [
-                    <span style={{ fontFamily: 'monospace', color: '#667eea', fontSize: 12, fontWeight: 700 }}>{w.code}</span>,
-                    <span style={{ fontWeight: 600, color: '#2d3748' }}>{w.title}</span>,
+                    <span style={{ fontFamily: 'monospace', color: 'var(--ks-accent)', fontSize: 12, fontWeight: 700 }}>{w.code}</span>,
+                    <span style={{ fontWeight: 600, color: 'var(--ks-text)' }}>{w.title}</span>,
                     <PriorityPill priority={w.priority} />,
-                    <span style={{ fontSize: 12, color: '#718096' }}>{fmt(w.slaDueAt)}</span>,
+                    <span style={{ fontSize: 12, color: 'var(--ks-subtle)' }}>{fmt(w.slaDueAt)}</span>,
                     <SlaText slaStatus={w.slaStatus} />,
                     <StatusPill status={w.status} />,
                   ])}
@@ -857,12 +899,12 @@ export default function WorkOrderList() {
           {/* ── TIME LOGS ── */}
           {page === 'timelogs' && (
             <>
-              <div style={{ fontSize: 20, fontWeight: 700, color: '#2d3748', marginBottom: 4 }}>Time Logs</div>
-              <div style={{ fontSize: 13, color: '#a0aec0', marginBottom: 20 }}>Technician time tracked per work order</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--ks-text)', marginBottom: 4 }}>Time Logs</div>
+              <div style={{ fontSize: 13, color: 'var(--ks-muted)', marginBottom: 20 }}>Technician time tracked per work order</div>
               <div style={{ ...cardStyle, padding: 40, textAlign: 'center' }}>
                 <div style={{ fontSize: 40, marginBottom: 16 }}>🕐</div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: '#4a5568', marginBottom: 8 }}>Time logs per work order</div>
-                <div style={{ fontSize: 13, color: '#a0aec0' }}>Open a work order to view its time log entries</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--ks-body)', marginBottom: 8 }}>Time logs per work order</div>
+                <div style={{ fontSize: 13, color: 'var(--ks-muted)' }}>Open a work order to view its time log entries</div>
               </div>
             </>
           )}
@@ -872,27 +914,34 @@ export default function WorkOrderList() {
             <>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
                 <div>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: '#2d3748' }}>Parts Inventory</div>
-                  <div style={{ fontSize: 13, color: '#64748b', marginTop: 3 }}>Track parts stock and usage</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--ks-text)' }}>Parts Inventory</div>
+                  <div style={{ fontSize: 13, color: 'var(--ks-body-muted)', marginTop: 3 }}>Track parts stock and usage</div>
                 </div>
                 <button onClick={() => setShowCreatePart(true)} style={{
                   ...btnStyle, padding: '10px 18px', fontSize: 13, fontWeight: 700,
-                  background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white',
+                  background: 'linear-gradient(135deg, var(--ks-accent), var(--ks-accent-2))', color: 'white',
                   boxShadow: '4px 4px 12px rgba(102,126,234,0.4)',
                 }}>+ New Part</button>
               </div>
               <div style={{ ...cardStyle, overflow: 'hidden' }}>
                 <Table
-                  cols={['SKU', 'Name', 'Unit Cost', 'Stock Qty', 'Status']}
+                  cols={['SKU', 'Name', 'Unit Cost', 'Stock Qty', 'Status', 'Action']}
                   empty={loading.parts ? 'Loading…' : 'No parts found'}
                   rows={partsInventory.map(p => {
-                    const s = PART_STATUS_COLORS[p.status] || { bg: '#f1f5f9', color: '#64748b', label: p.status };
+                    const s = PART_STATUS_COLORS[p.status] || { bg: 'var(--ks-neutral-bg)', color: 'var(--ks-body-muted)', label: p.status };
                     return [
-                      <span style={{ fontFamily: 'monospace', color: '#667eea', fontWeight: 700 }}>{p.sku}</span>,
-                      <span style={{ fontWeight: 600, color: '#2d3748' }}>{p.name}</span>,
+                      <span style={{ fontFamily: 'monospace', color: 'var(--ks-accent)', fontWeight: 700 }}>{p.sku}</span>,
+                      <span style={{ fontWeight: 600, color: 'var(--ks-text)' }}>{p.name}</span>,
                       `$${p.unitCost.toFixed(2)}`,
                       String(p.stockQty),
                       <Pill text={s.label} bg={s.bg} color={s.color} />,
+                       <button
+                         type="button"
+                         title={`Delete ${p.name}`}
+                         aria-label={`Delete ${p.name}`}
+                         onClick={() => setPartToDelete(p)}
+                         style={{ ...btnStyle, padding: '6px 10px', color: 'var(--ks-danger)', fontSize: 14, lineHeight: 1 }}
+                       >🗑</button>,
                     ];
                   })}
                 />
@@ -903,24 +952,24 @@ export default function WorkOrderList() {
           {/* ── TEAM ── */}
           {page === 'team' && (
             <>
-              <div style={{ fontSize: 20, fontWeight: 700, color: '#2d3748', marginBottom: 4 }}>Team</div>
-              <div style={{ fontSize: 13, color: '#a0aec0', marginBottom: 20 }}>Members in your organization workspace</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--ks-text)', marginBottom: 4 }}>Team</div>
+              <div style={{ fontSize: 13, color: 'var(--ks-muted)', marginBottom: 20 }}>Members in your organization workspace</div>
               <div style={{ ...cardStyle, padding: 28 }}>
                 {canSeeInvite ? (
                   <>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#a0aec0', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 14 }}>Your Workspace Invite Code</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ks-muted)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 14 }}>Your Workspace Invite Code</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
                       <div style={{ ...insetStyle, flex: 1, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ fontFamily: 'monospace', fontSize: 24, fontWeight: 800, letterSpacing: 6, color: '#667eea' }}>{inviteCode || 'N/A'}</span>
+                        <span style={{ fontFamily: 'monospace', fontSize: 24, fontWeight: 800, letterSpacing: 6, color: 'var(--ks-accent)' }}>{inviteCode || 'N/A'}</span>
                       </div>
-                      <button onClick={copyInvite} style={{ ...btnStyle, padding: '12px 18px', fontSize: 13, fontWeight: 700, background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white', boxShadow: '4px 4px 12px rgba(102,126,234,0.4)' }}>
+                      <button onClick={copyInvite} style={{ ...btnStyle, padding: '12px 18px', fontSize: 13, fontWeight: 700, background: 'linear-gradient(135deg, var(--ks-accent), var(--ks-accent-2))', color: 'white', boxShadow: '4px 4px 12px rgba(102,126,234,0.4)' }}>
                         {copied ? '✓ Copied!' : 'Copy'}
                       </button>
                     </div>
-                    <div style={{ fontSize: 12, color: '#a0aec0' }}>Share this code with Dispatchers and Technicians only. Customers should not receive this code.</div>
+                    <div style={{ fontSize: 12, color: 'var(--ks-muted)' }}>Share this code with Dispatchers and Technicians only. Customers should not receive this code.</div>
                   </>
                 ) : (
-                  <div style={{ fontSize: 13, color: '#a0aec0' }}>Only Managers can view and share the workspace invite code.</div>
+                  <div style={{ fontSize: 13, color: 'var(--ks-muted)' }}>Only Managers can view and share the workspace invite code.</div>
                 )}
               </div>
             </>
@@ -931,8 +980,8 @@ export default function WorkOrderList() {
             <>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
                 <div>
-                  <button onClick={() => { setPage('workorders'); loadWorkOrders(); }} style={{ ...btnStyle, padding: '7px 14px', fontSize: 12, color: '#718096', marginBottom: 10 }}>← Back to Work Orders</button>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: '#2d3748' }}>{selectedWO.code} — {selectedWO.title}</div>
+                  <button onClick={() => { setPage('workorders'); loadWorkOrders(); }} style={{ ...btnStyle, padding: '7px 14px', fontSize: 12, color: 'var(--ks-subtle)', marginBottom: 10 }}>← Back to Work Orders</button>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--ks-text)' }}>{selectedWO.code} — {selectedWO.title}</div>
                 </div>
               </div>
 
@@ -941,34 +990,34 @@ export default function WorkOrderList() {
                   {/* main card */}
                   <div style={{ ...cardStyle, padding: 20 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                      <span style={{ fontFamily: 'monospace', color: '#667eea', fontSize: 13, fontWeight: 700 }}>{selectedWO.code}</span>
+                      <span style={{ fontFamily: 'monospace', color: 'var(--ks-accent)', fontSize: 13, fontWeight: 700 }}>{selectedWO.code}</span>
                       <StatusPill status={selectedWO.status} />
                       <PriorityPill priority={selectedWO.priority} />
                     </div>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: '#2d3748', marginBottom: 10 }}>{selectedWO.title} — {selectedWO.siteName}</div>
-                    <div style={{ fontSize: 14, color: '#718096', lineHeight: 1.6 }}>{selectedWO.description || 'No description provided.'}</div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--ks-text)', marginBottom: 10 }}>{selectedWO.title} — {selectedWO.siteName}</div>
+                    <div style={{ fontSize: 14, color: 'var(--ks-subtle)', lineHeight: 1.6 }}>{selectedWO.description || 'No description provided.'}</div>
                   </div>
 
                   {/* history */}
                   <div style={{ ...cardStyle, padding: 20 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#a0aec0', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 16 }}>Status History</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ks-muted)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 16 }}>Status History</div>
                     {woHistory.length === 0 ? (
-                      <div style={{ color: '#a0aec0', fontSize: 13, marginBottom: TERMINAL_STATUSES.includes(selectedWO.status) ? 0 : 14 }}>No history yet</div>
+                      <div style={{ color: 'var(--ks-muted)', fontSize: 13, marginBottom: TERMINAL_STATUSES.includes(selectedWO.status) ? 0 : 14 }}>No history yet</div>
                     ) : woHistory.map((h, i) => (
                       <div key={i} style={{ display: 'flex', gap: 12, paddingBottom: 14, position: 'relative' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                           <div style={{
                             width: 28, height: 28, borderRadius: '50%',
-                            background: '#38a169', color: 'white',
+                            background: 'var(--ks-success)', color: 'white',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0,
                             boxShadow: '3px 3px 7px rgba(163,177,198,0.5), -2px -2px 5px rgba(255,255,255,0.9)',
                           }}>✓</div>
                           {i < woHistory.length - 1 && <div style={{ width: 2, flex: 1, background: 'rgba(163,177,198,0.3)', marginTop: 4, minHeight: 14 }} />}
                         </div>
                         <div style={{ paddingTop: 4 }}>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: '#2d3748' }}>{h.fromStatus || '—'} → {h.toStatus} · {h.changedByName || 'system'}</div>
-                          <div style={{ fontSize: 11, color: '#a0aec0', marginTop: 2 }}>{fmt(h.changedAt)}</div>
-                          {h.note && <div style={{ fontSize: 12, color: '#718096', fontStyle: 'italic', marginTop: 3 }}>"{h.note}"</div>}
+                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ks-text)' }}>{h.fromStatus || '—'} → {h.toStatus} · {h.changedByName || 'system'}</div>
+                          <div style={{ fontSize: 11, color: 'var(--ks-muted)', marginTop: 2 }}>{fmt(h.changedAt)}</div>
+                          {h.note && <div style={{ fontSize: 12, color: 'var(--ks-subtle)', fontStyle: 'italic', marginTop: 3 }}>"{h.note}"</div>}
                         </div>
                       </div>
                     ))}
@@ -978,13 +1027,13 @@ export default function WorkOrderList() {
                       <div style={{ display: 'flex', gap: 12 }}>
                         <div style={{
                           width: 28, height: 28, borderRadius: '50%',
-                          background: '#e8ecf1', color: '#d97706',
+                          background: 'var(--ks-current-bg)', color: 'var(--ks-warning)',
                           display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0,
                           boxShadow: 'inset 2px 2px 5px rgba(163,177,198,0.4), inset -1px -1px 3px rgba(255,255,255,0.9)',
                         }}>●</div>
                         <div style={{ paddingTop: 4 }}>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: '#2d3748' }}>Awaiting next transition</div>
-                          <div style={{ fontSize: 11, color: '#a0aec0', marginTop: 2 }}>Current</div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ks-text)' }}>Awaiting next transition</div>
+                          <div style={{ fontSize: 11, color: 'var(--ks-muted)', marginTop: 2 }}>Current</div>
                         </div>
                       </div>
                     )}
@@ -994,7 +1043,7 @@ export default function WorkOrderList() {
                 {/* right panel */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <div style={{ ...cardStyle, padding: 18 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#a0aec0', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 14 }}>Details</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ks-muted)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 14 }}>Details</div>
                     {[
                       ['Customer', selectedWO.customerName || '—'],
                       ['Site', selectedWO.siteName || '—'],
@@ -1002,35 +1051,35 @@ export default function WorkOrderList() {
                       ['SLA Due', fmt(selectedWO.slaDueAt)],
                     ].map(([k, v]) => (
                       <div key={k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, fontSize: 13 }}>
-                        <span style={{ color: '#a0aec0' }}>{k}</span>
-                        <span style={{ color: '#2d3748', fontWeight: 600 }}>{v}</span>
+                        <span style={{ color: 'var(--ks-muted)' }}>{k}</span>
+                        <span style={{ color: 'var(--ks-text)', fontWeight: 600 }}>{v}</span>
                       </div>
                     ))}
                   </div>
 
                   <div style={{ ...cardStyle, padding: 18 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#a0aec0', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 14 }}>SLA Status</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ks-muted)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 14 }}>SLA Status</div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 13 }}>
-                      <span style={{ color: '#a0aec0' }}>Status</span>
+                      <span style={{ color: 'var(--ks-muted)' }}>Status</span>
                       <SlaText slaStatus={selectedWO.slaStatus} />
                     </div>
                   </div>
 
                   <div style={{ ...cardStyle, padding: 18 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#a0aec0', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 14 }}>Parts Used</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ks-muted)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 14 }}>Parts Used</div>
                     {woParts.length === 0 ? (
-                      <div style={{ color: '#a0aec0', fontSize: 13 }}>No parts logged</div>
+                      <div style={{ color: 'var(--ks-muted)', fontSize: 13 }}>No parts logged</div>
                     ) : (
                       <>
                         {woParts.map((p, i) => (
                           <div key={i} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 13 }}>
-                            <span style={{ color: '#718096' }}>{p.partName} ×{p.qtyUsed}</span>
-                            <span style={{ color: '#2d3748', fontWeight: 600 }}>${p.totalCost}</span>
+                            <span style={{ color: 'var(--ks-subtle)' }}>{p.partName} ×{p.qtyUsed}</span>
+                            <span style={{ color: 'var(--ks-text)', fontWeight: 600 }}>${p.totalCost}</span>
                           </div>
                         ))}
                         <div style={{ borderTop: '1px solid rgba(163,177,198,0.3)', paddingTop: 10, marginTop: 6, display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                          <span style={{ color: '#a0aec0' }}>Total</span>
-                          <span style={{ fontWeight: 700, color: '#2d3748' }}>${woParts.reduce((a, p) => a + parseFloat(String(p.totalCost) || '0'), 0).toFixed(2)}</span>
+                          <span style={{ color: 'var(--ks-muted)' }}>Total</span>
+                          <span style={{ fontWeight: 700, color: 'var(--ks-text)' }}>${woParts.reduce((a, p) => a + parseFloat(String(p.totalCost) || '0'), 0).toFixed(2)}</span>
                         </div>
                       </>
                     )}
@@ -1113,15 +1162,43 @@ export default function WorkOrderList() {
         </Modal>
       )}
 
+      {partToDelete && (
+        <div
+          role="presentation"
+          onClick={() => !deletingPart && setPartToDelete(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 350, padding: 20,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(15,23,42,0.42)', backdropFilter: 'blur(8px)',
+          }}
+        >
+          <div
+            role="dialog" aria-modal="true" aria-labelledby="delete-part-title"
+            onClick={e => e.stopPropagation()}
+            style={{ ...cardStyle, width: '100%', maxWidth: 420, padding: 28, background: 'var(--ks-modal)' }}
+          >
+            <div style={{ width: 44, height: 44, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--ks-danger-bg)', color: 'var(--ks-danger)', fontSize: 20, marginBottom: 16 }}>🗑</div>
+            <div id="delete-part-title" style={{ fontSize: 18, fontWeight: 750, color: 'var(--ks-text)', marginBottom: 8 }}>Delete inventory item?</div>
+            <div style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--ks-body)', marginBottom: 22 }}>This will permanently remove <strong style={{ color: 'var(--ks-text)' }}>{partToDelete.name}</strong> ({partToDelete.sku}). This action cannot be undone.</div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <button type="button" disabled={deletingPart} onClick={() => setPartToDelete(null)} style={{ ...btnStyle, padding: '10px 16px', fontSize: 13, fontWeight: 650, color: 'var(--ks-subtle)' }}>Cancel</button>
+              <button type="button" disabled={deletingPart} onClick={deletePart} style={{ ...btnStyle, padding: '10px 16px', fontSize: 13, fontWeight: 700, background: 'var(--ks-danger)', color: 'white', opacity: deletingPart ? 0.65 : 1 }}>
+                {deletingPart ? 'Deleting…' : 'Delete permanently'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── TOAST ── */}
       {toast && (
         <div style={{
           position: 'fixed', bottom: 24, right: 24, zIndex: 400,
           padding: '12px 20px', borderRadius: 14,
-          background: 'rgba(255,255,255,0.55)',
+          background: 'var(--ks-button)',
           backdropFilter: 'blur(18px) saturate(170%)', WebkitBackdropFilter: 'blur(18px) saturate(170%)',
           border: '1px solid rgba(255,255,255,0.7)',
-          fontSize: 13, fontWeight: 600, color: '#38a169',
+          fontSize: 13, fontWeight: 600, color: 'var(--ks-success)',
           boxShadow: '8px 8px 20px rgba(163,177,198,0.5), -4px -4px 12px rgba(255,255,255,0.8)',
           display: 'flex', alignItems: 'center', gap: 8,
         }}>
