@@ -70,38 +70,51 @@ type Page = 'dashboard' | 'workorders' | 'customers' | 'sites' | 'sla' | 'timelo
 
 const TERMINAL_STATUSES = ['CLOSED', 'CANCELLED'];
 
-// Hybrid glassmorphism + neomorphism: frosted translucent surface (blur + soft
-// white border/highlight) layered on top of the classic soft neomorphic shadow pair.
-const PAGE_BG = 'linear-gradient(135deg, #dfe6ee 0%, #eef1f6 50%, #e3e9f0 100%)';
+// Hybrid glassmorphism + neomorphism: a colorful frosted-glass surface (strong blur +
+// bright tint + glowing border) layered on top of a soft neomorphic shadow pair, sitting
+// on a light, airy gradient backdrop so the blur actually has something to diffuse.
+const PAGE_BG = 'radial-gradient(circle at 15% 0%, #dbe9ff 0%, transparent 45%), radial-gradient(circle at 85% 15%, #ffe3f1 0%, transparent 40%), radial-gradient(circle at 50% 100%, #dcfce7 0%, transparent 45%), linear-gradient(135deg, #eef2fb 0%, #f7f2fb 50%, #eefbf5 100%)';
 
 const cardStyle: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.45)',
-  backdropFilter: 'blur(18px) saturate(160%)',
-  WebkitBackdropFilter: 'blur(18px) saturate(160%)',
-  border: '1px solid rgba(255,255,255,0.6)',
-  borderRadius: 18,
-  boxShadow: '8px 8px 18px rgba(163,177,198,0.45), -6px -6px 14px rgba(255,255,255,0.7), inset 0 1px 0 rgba(255,255,255,0.5)',
+  background: 'rgba(255,255,255,0.55)',
+  backdropFilter: 'blur(24px) saturate(180%)',
+  WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+  border: '1px solid rgba(255,255,255,0.8)',
+  borderRadius: 20,
+  boxShadow: '10px 10px 22px rgba(148,163,196,0.35), -8px -8px 18px rgba(255,255,255,0.9), inset 0 1px 0 rgba(255,255,255,0.7)',
 };
 
 const insetStyle: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.25)',
-  backdropFilter: 'blur(14px) saturate(160%)',
-  WebkitBackdropFilter: 'blur(14px) saturate(160%)',
-  border: '1px solid rgba(255,255,255,0.4)',
+  background: 'rgba(255,255,255,0.35)',
+  backdropFilter: 'blur(16px) saturate(180%)',
+  WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+  border: '1px solid rgba(255,255,255,0.6)',
   borderRadius: 16,
-  boxShadow: 'inset 4px 4px 10px rgba(163,177,198,0.4), inset -3px -3px 8px rgba(255,255,255,0.6)',
+  boxShadow: 'inset 5px 5px 12px rgba(148,163,196,0.35), inset -4px -4px 10px rgba(255,255,255,0.8)',
 };
 
 const btnStyle: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.35)',
-  backdropFilter: 'blur(10px) saturate(160%)',
-  WebkitBackdropFilter: 'blur(10px) saturate(160%)',
-  border: '1px solid rgba(255,255,255,0.55)',
+  background: 'rgba(255,255,255,0.5)',
+  backdropFilter: 'blur(12px) saturate(180%)',
+  WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+  border: '1px solid rgba(255,255,255,0.75)',
   borderRadius: 12,
   cursor: 'pointer',
   fontFamily: 'inherit',
-  boxShadow: '4px 4px 10px rgba(163,177,198,0.4), -3px -3px 8px rgba(255,255,255,0.7)',
+  boxShadow: '5px 5px 12px rgba(148,163,196,0.35), -4px -4px 10px rgba(255,255,255,0.85)',
   transition: 'all 0.18s ease',
+};
+
+// Distinct accent colors per nav section so the sidebar isn't a wall of one color.
+const NAV_ACCENTS: Record<string, { color: string; bg: string; glow: string }> = {
+  dashboard:  { color: '#4f46e5', bg: 'rgba(79,70,229,0.14)',  glow: 'rgba(79,70,229,0.35)' },
+  workorders: { color: '#2563eb', bg: 'rgba(37,99,235,0.14)',  glow: 'rgba(37,99,235,0.35)' },
+  customers:  { color: '#0d9488', bg: 'rgba(13,148,136,0.14)', glow: 'rgba(13,148,136,0.35)' },
+  sites:      { color: '#db2777', bg: 'rgba(219,39,119,0.14)', glow: 'rgba(219,39,119,0.35)' },
+  sla:        { color: '#dc2626', bg: 'rgba(220,38,38,0.14)',  glow: 'rgba(220,38,38,0.35)' },
+  timelogs:   { color: '#9333ea', bg: 'rgba(147,51,234,0.14)', glow: 'rgba(147,51,234,0.35)' },
+  parts:      { color: '#d97706', bg: 'rgba(217,119,6,0.14)',  glow: 'rgba(217,119,6,0.35)' },
+  team:       { color: '#16a34a', bg: 'rgba(22,163,74,0.14)',  glow: 'rgba(22,163,74,0.35)' },
 };
 
 const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
@@ -411,82 +424,78 @@ export default function WorkOrderList() {
   const canSeeInvite = role === 'MANAGER';
 
   // ── SIDEBAR ──
-  const Sidebar = () => (
-    <div style={{
-      width: 220, background: 'rgba(255,255,255,0.3)',
-      backdropFilter: 'blur(20px) saturate(160%)', WebkitBackdropFilter: 'blur(20px) saturate(160%)',
-      borderRight: '1px solid rgba(255,255,255,0.5)',
-      flexShrink: 0,
-      padding: '20px 12px', display: 'flex', flexDirection: 'column', gap: 2,
-      boxShadow: '4px 0 20px rgba(163,177,198,0.25)',
-    }}>
-      {[
-        { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-        { id: 'workorders', label: 'Work Orders', icon: '📋' },
-        { id: 'customers', label: 'Customers', icon: '🏢' },
-        { id: 'sites', label: 'Sites', icon: '📍' },
-      ].map(item => (
-        <button key={item.id} onClick={() => navTo(item.id as Page)} style={{
-          ...btnStyle,
-          display: 'flex', alignItems: 'center', gap: 10,
-          padding: '10px 12px', fontSize: 13, width: '100%', textAlign: 'left',
-          color: page === item.id ? '#667eea' : '#718096',
-          fontWeight: page === item.id ? 700 : 400,
-          boxShadow: page === item.id
-            ? 'inset 3px 3px 7px rgba(163,177,198,0.5), inset -2px -2px 5px rgba(255,255,255,0.8)'
-            : '3px 3px 8px rgba(163,177,198,0.4), -2px -2px 6px rgba(255,255,255,0.9)',
-        }}>
-          <span style={{ fontSize: 16 }}>{item.icon}</span> {item.label}
-        </button>
-      ))}
-
-      <div style={{ fontSize: 10, fontWeight: 700, color: '#a0aec0', textTransform: 'uppercase', letterSpacing: 0.8, padding: '12px 10px 4px', marginTop: 6 }}>Reports</div>
-
-      {[
-        { id: 'sla', label: 'SLA Tracking', icon: '⏱️' },
-        { id: 'timelogs', label: 'Time Logs', icon: '🕐' },
-        { id: 'parts', label: 'Parts', icon: '🔩' },
-      ].map(item => (
-        <button key={item.id} onClick={() => navTo(item.id as Page)} style={{
-          ...btnStyle,
-          display: 'flex', alignItems: 'center', gap: 10,
-          padding: '10px 12px', fontSize: 13, width: '100%', textAlign: 'left',
-          color: page === item.id ? '#667eea' : '#718096',
-          fontWeight: page === item.id ? 700 : 400,
-          boxShadow: page === item.id
-            ? 'inset 3px 3px 7px rgba(163,177,198,0.5), inset -2px -2px 5px rgba(255,255,255,0.8)'
-            : '3px 3px 8px rgba(163,177,198,0.4), -2px -2px 6px rgba(255,255,255,0.9)',
-        }}>
-          <span style={{ fontSize: 16 }}>{item.icon}</span> {item.label}
-        </button>
-      ))}
-
-      <div style={{ fontSize: 10, fontWeight: 700, color: '#a0aec0', textTransform: 'uppercase', letterSpacing: 0.8, padding: '12px 10px 4px', marginTop: 6 }}>Settings</div>
-
-      <button onClick={() => navTo('team' as Page)} style={{
-        ...btnStyle,
+  const NavButton = ({ id, label, icon }: { id: Page; label: string; icon: string }) => {
+    const accent = NAV_ACCENTS[id] || NAV_ACCENTS.dashboard;
+    const active = page === id;
+    return (
+      <button key={id} onClick={() => navTo(id)} style={{
         display: 'flex', alignItems: 'center', gap: 10,
         padding: '10px 12px', fontSize: 13, width: '100%', textAlign: 'left',
-        color: page === 'team' ? '#667eea' : '#718096',
-        fontWeight: page === 'team' ? 700 : 400,
-        boxShadow: page === 'team'
-          ? 'inset 3px 3px 7px rgba(163,177,198,0.5), inset -2px -2px 5px rgba(255,255,255,0.8)'
-          : '3px 3px 8px rgba(163,177,198,0.4), -2px -2px 6px rgba(255,255,255,0.9)',
+        border: active ? `1px solid ${accent.color}55` : '1px solid rgba(255,255,255,0.5)',
+        borderRadius: 12,
+        cursor: 'pointer',
+        fontFamily: 'inherit',
+        color: active ? accent.color : '#475569',
+        fontWeight: active ? 700 : 500,
+        background: active
+          ? `linear-gradient(135deg, ${accent.bg}, rgba(255,255,255,0.55))`
+          : 'rgba(255,255,255,0.32)',
+        backdropFilter: 'blur(10px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(10px) saturate(180%)',
+        boxShadow: active
+          ? `inset 3px 3px 8px rgba(148,163,196,0.3), inset -2px -2px 6px rgba(255,255,255,0.8), 0 0 0 1px ${accent.glow} inset, 0 4px 14px ${accent.glow}`
+          : '3px 3px 8px rgba(148,163,196,0.25), -2px -2px 6px rgba(255,255,255,0.75)',
+        transition: 'all 0.18s ease',
       }}>
-        <span style={{ fontSize: 16 }}>👥</span> Team
+        <span style={{
+          fontSize: 16, width: 26, height: 26, borderRadius: 8,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: active ? `${accent.color}22` : 'transparent',
+        }}>{icon}</span> {label}
       </button>
+    );
+  };
+
+  const SectionLabel = ({ children }: { children: React.ReactNode }) => (
+    <div style={{
+      fontSize: 10, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase',
+      letterSpacing: 1.1, padding: '14px 10px 6px', marginTop: 4,
+    }}>{children}</div>
+  );
+
+  const Sidebar = () => (
+    <div style={{
+      width: 226, background: 'rgba(255,255,255,0.4)',
+      backdropFilter: 'blur(28px) saturate(180%)', WebkitBackdropFilter: 'blur(28px) saturate(180%)',
+      borderRight: '1px solid rgba(255,255,255,0.7)',
+      flexShrink: 0,
+      padding: '20px 12px', display: 'flex', flexDirection: 'column', gap: 6,
+      boxShadow: '6px 0 24px rgba(148,163,196,0.2)',
+    }}>
+      <NavButton id="dashboard" label="Dashboard" icon="📊" />
+      <NavButton id="workorders" label="Work Orders" icon="📋" />
+      <NavButton id="customers" label="Customers" icon="🏢" />
+      <NavButton id="sites" label="Sites" icon="📍" />
+
+      <SectionLabel>Reports</SectionLabel>
+      <NavButton id="sla" label="SLA Tracking" icon="⏱️" />
+      <NavButton id="timelogs" label="Time Logs" icon="🕐" />
+      <NavButton id="parts" label="Parts" icon="🔩" />
+
+      <SectionLabel>Settings</SectionLabel>
+      <NavButton id="team" label="Team" icon="👥" />
     </div>
   );
 
   // ── TOPBAR ──
   const Topbar = () => (
     <div style={{
-      height: 60, background: 'rgba(255,255,255,0.35)',
-      backdropFilter: 'blur(20px) saturate(160%)', WebkitBackdropFilter: 'blur(20px) saturate(160%)',
-      borderBottom: '1px solid rgba(255,255,255,0.5)',
+      height: 62, background: 'rgba(255,255,255,0.45)',
+      backdropFilter: 'blur(28px) saturate(180%)', WebkitBackdropFilter: 'blur(28px) saturate(180%)',
+      borderBottom: '1px solid rgba(255,255,255,0.7)',
       flexShrink: 0,
       display: 'flex', alignItems: 'center', padding: '0 24px', gap: 14,
-      boxShadow: '0 4px 20px rgba(163,177,198,0.35)',
+      boxShadow: '0 6px 24px rgba(148,163,196,0.25)',
       position: 'relative', zIndex: 10,
     }}>
       <div style={{
