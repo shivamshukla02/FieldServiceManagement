@@ -70,26 +70,38 @@ type Page = 'dashboard' | 'workorders' | 'customers' | 'sites' | 'sla' | 'timelo
 
 const TERMINAL_STATUSES = ['CLOSED', 'CANCELLED'];
 
+// Hybrid glassmorphism + neomorphism: frosted translucent surface (blur + soft
+// white border/highlight) layered on top of the classic soft neomorphic shadow pair.
+const PAGE_BG = 'linear-gradient(135deg, #dfe6ee 0%, #eef1f6 50%, #e3e9f0 100%)';
+
 const cardStyle: React.CSSProperties = {
-  background: '#e8ecf1',
-  borderRadius: 16,
-  boxShadow: '6px 6px 14px rgba(163,177,198,0.6), -4px -4px 10px rgba(255,255,255,0.95)',
+  background: 'rgba(255,255,255,0.45)',
+  backdropFilter: 'blur(18px) saturate(160%)',
+  WebkitBackdropFilter: 'blur(18px) saturate(160%)',
+  border: '1px solid rgba(255,255,255,0.6)',
+  borderRadius: 18,
+  boxShadow: '8px 8px 18px rgba(163,177,198,0.45), -6px -6px 14px rgba(255,255,255,0.7), inset 0 1px 0 rgba(255,255,255,0.5)',
 };
 
 const insetStyle: React.CSSProperties = {
-  background: '#e8ecf1',
+  background: 'rgba(255,255,255,0.25)',
+  backdropFilter: 'blur(14px) saturate(160%)',
+  WebkitBackdropFilter: 'blur(14px) saturate(160%)',
+  border: '1px solid rgba(255,255,255,0.4)',
   borderRadius: 16,
-  boxShadow: 'inset 4px 4px 10px rgba(163,177,198,0.5), inset -3px -3px 8px rgba(255,255,255,0.9)',
+  boxShadow: 'inset 4px 4px 10px rgba(163,177,198,0.4), inset -3px -3px 8px rgba(255,255,255,0.6)',
 };
 
 const btnStyle: React.CSSProperties = {
-  background: '#e8ecf1',
-  border: 'none',
-  borderRadius: 10,
+  background: 'rgba(255,255,255,0.35)',
+  backdropFilter: 'blur(10px) saturate(160%)',
+  WebkitBackdropFilter: 'blur(10px) saturate(160%)',
+  border: '1px solid rgba(255,255,255,0.55)',
+  borderRadius: 12,
   cursor: 'pointer',
   fontFamily: 'inherit',
-  boxShadow: '4px 4px 10px rgba(163,177,198,0.5), -3px -3px 8px rgba(255,255,255,0.9)',
-  transition: 'all 0.15s',
+  boxShadow: '4px 4px 10px rgba(163,177,198,0.4), -3px -3px 8px rgba(255,255,255,0.7)',
+  transition: 'all 0.18s ease',
 };
 
 const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
@@ -386,10 +398,11 @@ export default function WorkOrderList() {
   const sitesForWoCustomer = allSites.filter(s => !woForm.customerId || String(s.customerId) === woForm.customerId);
 
   const neuInput: React.CSSProperties = {
-    width: '100%', padding: '11px 14px', border: 'none', outline: 'none',
-    background: '#e8ecf1', fontFamily: 'inherit', fontSize: 14, color: '#2d3748',
+    width: '100%', padding: '11px 14px', border: '1px solid rgba(255,255,255,0.5)', outline: 'none',
+    background: 'rgba(255,255,255,0.3)', backdropFilter: 'blur(10px) saturate(160%)', WebkitBackdropFilter: 'blur(10px) saturate(160%)',
+    fontFamily: 'inherit', fontSize: 14, color: '#2d3748',
     borderRadius: 12,
-    boxShadow: 'inset 3px 3px 7px rgba(163,177,198,0.5), inset -2px -2px 5px rgba(255,255,255,0.9)',
+    boxShadow: 'inset 3px 3px 7px rgba(163,177,198,0.4), inset -2px -2px 5px rgba(255,255,255,0.7)',
     boxSizing: 'border-box' as const,
   };
 
@@ -400,9 +413,12 @@ export default function WorkOrderList() {
   // ── SIDEBAR ──
   const Sidebar = () => (
     <div style={{
-      width: 220, background: '#e8ecf1', flexShrink: 0,
+      width: 220, background: 'rgba(255,255,255,0.3)',
+      backdropFilter: 'blur(20px) saturate(160%)', WebkitBackdropFilter: 'blur(20px) saturate(160%)',
+      borderRight: '1px solid rgba(255,255,255,0.5)',
+      flexShrink: 0,
       padding: '20px 12px', display: 'flex', flexDirection: 'column', gap: 2,
-      boxShadow: '4px 0 12px rgba(163,177,198,0.3)',
+      boxShadow: '4px 0 20px rgba(163,177,198,0.25)',
     }}>
       {[
         { id: 'dashboard', label: 'Dashboard', icon: '📊' },
@@ -465,9 +481,12 @@ export default function WorkOrderList() {
   // ── TOPBAR ──
   const Topbar = () => (
     <div style={{
-      height: 60, background: '#e8ecf1', flexShrink: 0,
+      height: 60, background: 'rgba(255,255,255,0.35)',
+      backdropFilter: 'blur(20px) saturate(160%)', WebkitBackdropFilter: 'blur(20px) saturate(160%)',
+      borderBottom: '1px solid rgba(255,255,255,0.5)',
+      flexShrink: 0,
       display: 'flex', alignItems: 'center', padding: '0 24px', gap: 14,
-      boxShadow: '0 4px 12px rgba(163,177,198,0.5), 0 -2px 6px rgba(255,255,255,0.8)',
+      boxShadow: '0 4px 20px rgba(163,177,198,0.35)',
       position: 'relative', zIndex: 10,
     }}>
       <div style={{
@@ -493,8 +512,12 @@ export default function WorkOrderList() {
             {showInvite && (
               <div style={{
                 position: 'absolute', right: 0, top: 48, zIndex: 100,
-                width: 280, padding: 20, background: '#e8ecf1', borderRadius: 16,
-                boxShadow: '8px 8px 20px rgba(163,177,198,0.6), -4px -4px 12px rgba(255,255,255,0.95)',
+                width: 280, padding: 20,
+                background: 'rgba(255,255,255,0.55)',
+                backdropFilter: 'blur(22px) saturate(170%)', WebkitBackdropFilter: 'blur(22px) saturate(170%)',
+                border: '1px solid rgba(255,255,255,0.7)',
+                borderRadius: 18,
+                boxShadow: '10px 10px 24px rgba(163,177,198,0.5), -6px -6px 14px rgba(255,255,255,0.8)',
               }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#2d3748', marginBottom: 4 }}>Team Invite Code</div>
                 <div style={{ fontSize: 11, color: '#a0aec0', marginBottom: 12 }}>Share with Dispatchers & Technicians only</div>
@@ -575,13 +598,14 @@ export default function WorkOrderList() {
   // ── MODAL ──
   const Modal = ({ title, onClose, onSubmit, children }: { title: string; onClose: () => void; onSubmit: () => void; children: React.ReactNode }) => (
     <div onClick={onClose} style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.15)',
-      backdropFilter: 'blur(4px)', zIndex: 300,
+      position: 'fixed', inset: 0, background: 'rgba(30,41,59,0.18)',
+      backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', zIndex: 300,
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
     }}>
       <div onClick={e => e.stopPropagation()} style={{
         ...cardStyle, padding: 28, width: '100%', maxWidth: 480,
-        boxShadow: '12px 12px 28px rgba(163,177,198,0.7), -6px -6px 16px rgba(255,255,255,0.95)',
+        background: 'rgba(255,255,255,0.65)',
+        boxShadow: '16px 16px 36px rgba(163,177,198,0.55), -8px -8px 20px rgba(255,255,255,0.85)',
       }}>
         <div style={{ fontSize: 17, fontWeight: 700, color: '#2d3748', marginBottom: 20 }}>{title}</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>{children}</div>
@@ -602,7 +626,7 @@ export default function WorkOrderList() {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100%', background: '#e8ecf1', fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100%', background: PAGE_BG, fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
       <Topbar />
 
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
@@ -1023,9 +1047,12 @@ export default function WorkOrderList() {
       {toast && (
         <div style={{
           position: 'fixed', bottom: 24, right: 24, zIndex: 400,
-          padding: '12px 20px', borderRadius: 12,
-          background: '#e8ecf1', fontSize: 13, fontWeight: 600, color: '#38a169',
-          boxShadow: '6px 6px 16px rgba(163,177,198,0.6), -3px -3px 10px rgba(255,255,255,0.9)',
+          padding: '12px 20px', borderRadius: 14,
+          background: 'rgba(255,255,255,0.55)',
+          backdropFilter: 'blur(18px) saturate(170%)', WebkitBackdropFilter: 'blur(18px) saturate(170%)',
+          border: '1px solid rgba(255,255,255,0.7)',
+          fontSize: 13, fontWeight: 600, color: '#38a169',
+          boxShadow: '8px 8px 20px rgba(163,177,198,0.5), -4px -4px 12px rgba(255,255,255,0.8)',
           display: 'flex', alignItems: 'center', gap: 8,
         }}>
           ✓ {toast}
