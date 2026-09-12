@@ -31,14 +31,25 @@ export default function Login() {
 
   return (
     <div style={{
-      minHeight: '100vh', width: '100%',
-      backgroundImage: `url(${loginBg})`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundRepeat: 'no-repeat',
+      position: 'fixed',
+      top: 0, left: 0,
+      width: '100vw', height: '100vh',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontFamily: "'Segoe UI', sans-serif", position: 'relative', overflow: 'hidden'
+      fontFamily: "'Segoe UI', sans-serif",
+      overflow: 'hidden'
     }}>
+      {/* background image layer - stretched to fill exactly, no cropping, no empty space */}
+      <img
+        src={loginBg}
+        alt=""
+        style={{
+          position: 'absolute',
+          top: 0, left: 0,
+          width: '100%', height: '100%',
+          objectFit: 'fill',
+          zIndex: 0
+        }}
+      />
 
       <div style={{ width: '100%', maxWidth: 420, padding: '0 20px', position: 'relative', zIndex: 1 }}>
 
@@ -73,7 +84,7 @@ export default function Login() {
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'block', color: '#334155', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Email address</label>
               <div style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16, color: '#94a3b8' }}>✉️</span>
+                <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16 }}>✉️</span>
                 <input type="email" value={email} onChange={e => setEmail(e.target.value)}
                   placeholder="manager@company.com" required
                   style={{
@@ -94,7 +105,7 @@ export default function Login() {
             <div style={{ marginBottom: 22 }}>
               <label style={{ display: 'block', color: '#334155', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Password</label>
               <div style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16, color: '#94a3b8' }}>🔒</span>
+                <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16 }}>🔒</span>
                 <input type={showPassword ? 'text' : 'password'} value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder="Enter your password" required
@@ -110,7 +121,7 @@ export default function Login() {
                 />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} style={{
                   position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
-                  background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: 16
+                  background: 'none', border: 'none', cursor: 'pointer', fontSize: 16
                 }}>{showPassword ? '🙈' : '👁️'}</button>
               </div>
             </div>
