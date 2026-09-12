@@ -126,7 +126,7 @@ export default function Register() {
         position: 'absolute', inset: 0,
         backgroundImage: `url(${BG})`,
         backgroundSize: 'cover', backgroundPosition: 'center',
-        filter: 'blur(3px) brightness(0.5)',
+        filter: 'blur(1px) brightness(0.9)',
         transform: 'scale(1.05)', zIndex: 0,
       }} />
       <div style={{
