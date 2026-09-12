@@ -8,236 +8,851 @@ interface WorkOrder {
   title: string;
   status: string;
   priority: string;
+  slaStatus: string;
   customerName: string;
   siteName: string;
   assignedToName: string | null;
-  slaStatus: string;
+  slaDueAt: string | null;
+  description: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  NEW: '#667eea',
-  ASSIGNED: '#f59e0b',
-  IN_PROGRESS: '#22c55e',
-  ON_HOLD: '#f97316',
-  COMPLETED: '#8b5cf6',
-  CLOSED: '#6b7280',
-  CANCELLED: '#ef4444',
+interface Summary {
+  newCount: number;
+  assignedCount: number;
+  inProgressCount: number;
+  onHoldCount: number;
+  completedCount: number;
+  closedCount: number;
+  breachedCount: number;
+  atRiskCount: number;
+}
+
+interface HistoryItem {
+  fromStatus: string;
+  toStatus: string;
+  changedByName: string;
+  changedAt: string;
+  note: string;
+}
+
+interface PartItem {
+  partName: string;
+  qtyUsed: number;
+  totalCost: number;
+}
+
+type Page = 'dashboard' | 'workorders' | 'customers' | 'sites' | 'sla' | 'timelogs' | 'parts' | 'team' | 'wo-detail';
+
+const N = {
+  bg: '#e8ecf1',
+  card: 'background:#e8ecf1;border-radius:16px;box-shadow:6px 6px 14px rgba(163,177,198,0.6),-4px -4px 10px rgba(255,255,255,0.95)',
+  inset: 'background:#e8ecf1;border-radius:16px;box-shadow:inset 4px 4px 10px rgba(163,177,198,0.5),inset -3px -3px 8px rgba(255,255,255,0.9)',
 };
 
-const PRIORITY_COLORS: Record<string, string> = {
-  URGENT: '#ef4444',
-  HIGH: '#f97316',
-  MEDIUM: '#eab308',
-  LOW: '#22c55e',
+const cardStyle: React.CSSProperties = {
+  background: '#e8ecf1',
+  borderRadius: 16,
+  boxShadow: '6px 6px 14px rgba(163,177,198,0.6), -4px -4px 10px rgba(255,255,255,0.95)',
 };
 
-const SLA_COLORS: Record<string, string> = {
-  ON_TRACK: '#22c55e',
-  AT_RISK: '#f59e0b',
-  BREACHED: '#ef4444',
-  'N/A': '#6b7280',
+const insetStyle: React.CSSProperties = {
+  background: '#e8ecf1',
+  borderRadius: 16,
+  boxShadow: 'inset 4px 4px 10px rgba(163,177,198,0.5), inset -3px -3px 8px rgba(255,255,255,0.9)',
 };
+
+const btnStyle: React.CSSProperties = {
+  background: '#e8ecf1',
+  border: 'none',
+  borderRadius: 10,
+  cursor: 'pointer',
+  fontFamily: 'inherit',
+  boxShadow: '4px 4px 10px rgba(163,177,198,0.5), -3px -3px 8px rgba(255,255,255,0.9)',
+  transition: 'all 0.15s',
+};
+
+const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
+  NEW: { bg: '#ebf4ff', color: '#3182ce' },
+  ASSIGNED: { bg: '#fef3c7', color: '#d97706' },
+  IN_PROGRESS: { bg: '#dcfce7', color: '#16a34a' },
+  ON_HOLD: { bg: '#fff7ed', color: '#ea580c' },
+  COMPLETED: { bg: '#f3e8ff', color: '#7c3aed' },
+  CLOSED: { bg: '#f1f5f9', color: '#64748b' },
+  CANCELLED: { bg: '#fee2e2', color: '#dc2626' },
+};
+
+const PRIORITY_COLORS: Record<string, { bg: string; color: string }> = {
+  URGENT: { bg: '#fee2e2', color: '#dc2626' },
+  HIGH: { bg: '#fff7ed', color: '#ea580c' },
+  MEDIUM: { bg: '#fef3c7', color: '#d97706' },
+  LOW: { bg: '#dcfce7', color: '#16a34a' },
+};
+
+const SLA_COLORS: Record<string, { color: string }> = {
+  'ON_TRACK': { color: '#16a34a' },
+  'AT_RISK': { color: '#d97706' },
+  'BREACHED': { color: '#dc2626' },
+  'N/A': { color: '#94a3b8' },
+};
+
+function Pill({ text, bg, color }: { text: string; bg: string; color: string }) {
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center',
+      padding: '3px 10px', borderRadius: 6,
+      fontSize: 11, fontWeight: 700,
+      background: bg, color,
+    }}>{text.replace('_', ' ')}</span>
+  );
+}
+
+function StatusPill({ status }: { status: string }) {
+  const c = STATUS_COLORS[status] || { bg: '#f1f5f9', color: '#64748b' };
+  return <Pill text={status.replace('_', ' ')} bg={c.bg} color={c.color} />;
+}
+
+function PriorityPill({ priority }: { priority: string }) {
+  const c = PRIORITY_COLORS[priority] || { bg: '#f1f5f9', color: '#64748b' };
+  return <Pill text={priority} bg={c.bg} color={c.color} />;
+}
+
+function SlaText({ slaStatus }: { slaStatus: string }) {
+  const c = SLA_COLORS[slaStatus] || { color: '#94a3b8' };
+  return <span style={{ fontSize: 12, fontWeight: 700, color: c.color }}>{slaStatus?.replace('_', ' ') || 'N/A'}</span>;
+}
+
+function fmt(dt: string | null) {
+  if (!dt) return '—';
+  return new Date(dt).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
 
 export default function WorkOrderList() {
-  const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showInviteCode, setShowInviteCode] = useState(false);
-  const [copied, setCopied] = useState(false);
   const { email, role, organizationName, inviteCode, logout } = useAuth();
+  const [page, setPage] = useState<Page>('dashboard');
+  const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
+  const [summary, setSummary] = useState<Summary | null>(null);
+  const [selectedWO, setSelectedWO] = useState<WorkOrder | null>(null);
+  const [woHistory, setWoHistory] = useState<HistoryItem[]>([]);
+  const [woParts, setWoParts] = useState<PartItem[]>([]);
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [sites, setSites] = useState<any[]>([]);
+  const [showInvite, setShowInvite] = useState(false);
+  const [showCreateWO, setShowCreateWO] = useState(false);
+  const [showCreateCustomer, setShowCreateCustomer] = useState(false);
+  const [showCreateSite, setShowCreateSite] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [woSearch, setWoSearch] = useState('');
+  const [toast, setToast] = useState('');
+  const [woForm, setWoForm] = useState({ title: '', description: '', priority: 'MEDIUM', customerId: '1', siteId: '1' });
+  const [custForm, setCustForm] = useState({ name: '', contactEmail: '' });
+  const [siteForm, setSiteForm] = useState({ customerId: '1', name: '', address: '' });
 
-  useEffect(() => {
-    client.get('/work-orders')
-      .then(res => setWorkOrders(res.data.content || []))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+  useEffect(() => { loadDashboard(); }, []);
 
-  const copyInviteCode = () => {
-    if (inviteCode) {
-      navigator.clipboard.writeText(inviteCode);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
+
+  const loadDashboard = async () => {
+    try {
+      const [sum, wo] = await Promise.all([
+        client.get('/reports/summary').then(r => r.data),
+        client.get('/work-orders?size=5').then(r => r.data.content || []),
+      ]);
+      setSummary(sum);
+      setWorkOrders(wo);
+    } catch (e) { console.error(e); }
   };
 
-  const badge = (text: string, color: string) => (
-    <span style={{
-      background: color + '22', color, border: `1px solid ${color}44`,
-      borderRadius: 6, padding: '3px 8px', fontSize: 11, fontWeight: 600
+  const loadWorkOrders = async () => {
+    try {
+      const res = await client.get('/work-orders?size=50');
+      setWorkOrders(res.data.content || []);
+    } catch (e) { console.error(e); }
+  };
+
+  const loadCustomers = async () => {
+    try {
+      const res = await client.get('/customers?size=50');
+      setCustomers(res.data.content || []);
+    } catch (e) { console.error(e); }
+  };
+
+  const loadSites = async () => {
+    try {
+      const res = await client.get('/sites?customerId=1&size=50');
+      setSites(res.data.content || []);
+    } catch (e) { console.error(e); }
+  };
+
+  const openWODetail = async (wo: WorkOrder) => {
+    setSelectedWO(wo);
+    setPage('wo-detail');
+    try {
+      const [hist, parts] = await Promise.all([
+        client.get(`/work-orders/${wo.id}/history`).then(r => r.data),
+        client.get(`/work-orders/${wo.id}/parts`).then(r => r.data),
+      ]);
+      setWoHistory(hist);
+      setWoParts(parts);
+    } catch (e) { console.error(e); }
+  };
+
+  const navTo = (p: Page) => {
+    setPage(p);
+    if (p === 'dashboard') loadDashboard();
+    else if (p === 'workorders') loadWorkOrders();
+    else if (p === 'customers') loadCustomers();
+    else if (p === 'sites') loadSites();
+  };
+
+  const createWO = async () => {
+    try {
+      await client.post('/work-orders', {
+        title: woForm.title, description: woForm.description,
+        priority: woForm.priority,
+        customerId: parseInt(woForm.customerId),
+        siteId: parseInt(woForm.siteId),
+      });
+      setShowCreateWO(false);
+      setWoForm({ title: '', description: '', priority: 'MEDIUM', customerId: '1', siteId: '1' });
+      showToast('Work order created!');
+      loadWorkOrders(); loadDashboard();
+    } catch (e: any) { showToast('Error: ' + (e.response?.data || 'Failed')); }
+  };
+
+  const createCustomer = async () => {
+    try {
+      await client.post('/customers', custForm);
+      setShowCreateCustomer(false);
+      setCustForm({ name: '', contactEmail: '' });
+      showToast('Customer added!');
+      loadCustomers();
+    } catch (e) { showToast('Failed to create customer'); }
+  };
+
+  const createSite = async () => {
+    try {
+      await client.post('/sites', { ...siteForm, customerId: parseInt(siteForm.customerId) });
+      setShowCreateSite(false);
+      setSiteForm({ customerId: '1', name: '', address: '' });
+      showToast('Site added!');
+      loadSites();
+    } catch (e) { showToast('Failed to create site'); }
+  };
+
+  const copyInvite = () => {
+    if (inviteCode) navigator.clipboard?.writeText(inviteCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    showToast('Invite code copied!');
+  };
+
+  const filteredWO = workOrders.filter(w =>
+    w.title.toLowerCase().includes(woSearch.toLowerCase()) ||
+    w.code.toLowerCase().includes(woSearch.toLowerCase()) ||
+    (w.customerName || '').toLowerCase().includes(woSearch.toLowerCase())
+  );
+
+  const neuInput: React.CSSProperties = {
+    width: '100%', padding: '11px 14px', border: 'none', outline: 'none',
+    background: '#e8ecf1', fontFamily: 'inherit', fontSize: 14, color: '#2d3748',
+    borderRadius: 12,
+    boxShadow: 'inset 3px 3px 7px rgba(163,177,198,0.5), inset -2px -2px 5px rgba(255,255,255,0.9)',
+    boxSizing: 'border-box' as const,
+  };
+
+  // ── SIDEBAR ──
+  const Sidebar = () => (
+    <div style={{
+      width: 220, background: '#e8ecf1', flexShrink: 0,
+      padding: '20px 12px', display: 'flex', flexDirection: 'column', gap: 2,
+      boxShadow: '4px 0 12px rgba(163,177,198,0.3)',
     }}>
-      {text}
-    </span>
+      {[
+        { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+        { id: 'workorders', label: 'Work Orders', icon: '📋' },
+        { id: 'customers', label: 'Customers', icon: '🏢' },
+        { id: 'sites', label: 'Sites', icon: '📍' },
+      ].map(item => (
+        <button key={item.id} onClick={() => navTo(item.id as Page)} style={{
+          ...btnStyle,
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '10px 12px', fontSize: 13, width: '100%', textAlign: 'left',
+          color: page === item.id ? '#667eea' : '#718096',
+          fontWeight: page === item.id ? 700 : 400,
+          boxShadow: page === item.id
+            ? 'inset 3px 3px 7px rgba(163,177,198,0.5), inset -2px -2px 5px rgba(255,255,255,0.8)'
+            : '3px 3px 8px rgba(163,177,198,0.4), -2px -2px 6px rgba(255,255,255,0.9)',
+        }}>
+          <span style={{ fontSize: 16 }}>{item.icon}</span> {item.label}
+        </button>
+      ))}
+
+      <div style={{ fontSize: 10, fontWeight: 700, color: '#a0aec0', textTransform: 'uppercase', letterSpacing: 0.8, padding: '12px 10px 4px', marginTop: 6 }}>Reports</div>
+
+      {[
+        { id: 'sla', label: 'SLA Tracking', icon: '⏱️' },
+        { id: 'timelogs', label: 'Time Logs', icon: '🕐' },
+        { id: 'parts', label: 'Parts', icon: '🔩' },
+      ].map(item => (
+        <button key={item.id} onClick={() => navTo(item.id as Page)} style={{
+          ...btnStyle,
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '10px 12px', fontSize: 13, width: '100%', textAlign: 'left',
+          color: page === item.id ? '#667eea' : '#718096',
+          fontWeight: page === item.id ? 700 : 400,
+          boxShadow: page === item.id
+            ? 'inset 3px 3px 7px rgba(163,177,198,0.5), inset -2px -2px 5px rgba(255,255,255,0.8)'
+            : '3px 3px 8px rgba(163,177,198,0.4), -2px -2px 6px rgba(255,255,255,0.9)',
+        }}>
+          <span style={{ fontSize: 16 }}>{item.icon}</span> {item.label}
+        </button>
+      ))}
+
+      <div style={{ fontSize: 10, fontWeight: 700, color: '#a0aec0', textTransform: 'uppercase', letterSpacing: 0.8, padding: '12px 10px 4px', marginTop: 6 }}>Settings</div>
+
+      <button onClick={() => navTo('team' as Page)} style={{
+        ...btnStyle,
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '10px 12px', fontSize: 13, width: '100%', textAlign: 'left',
+        color: page === 'team' ? '#667eea' : '#718096',
+        fontWeight: page === 'team' ? 700 : 400,
+        boxShadow: page === 'team'
+          ? 'inset 3px 3px 7px rgba(163,177,198,0.5), inset -2px -2px 5px rgba(255,255,255,0.8)'
+          : '3px 3px 8px rgba(163,177,198,0.4), -2px -2px 6px rgba(255,255,255,0.9)',
+      }}>
+        <span style={{ fontSize: 16 }}>👥</span> Team
+      </button>
+    </div>
+  );
+
+  // ── TOPBAR ──
+  const Topbar = () => (
+    <div style={{
+      height: 60, background: '#e8ecf1', flexShrink: 0,
+      display: 'flex', alignItems: 'center', padding: '0 24px', gap: 14,
+      boxShadow: '0 4px 12px rgba(163,177,198,0.5), 0 -2px 6px rgba(255,255,255,0.8)',
+      position: 'relative', zIndex: 10,
+    }}>
+      <div style={{
+        width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+        background: 'linear-gradient(135deg, #667eea, #764ba2)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        color: 'white', fontSize: 16, fontWeight: 700,
+        boxShadow: '3px 3px 8px rgba(163,177,198,0.6), -2px -2px 6px rgba(255,255,255,0.9)',
+      }}>K</div>
+      <div style={{ fontSize: 16, fontWeight: 700, color: '#2d3748' }}>KEYSTONE</div>
+      {organizationName && <>
+        <div style={{ color: '#a0aec0', fontSize: 14 }}>·</div>
+        <div style={{ fontSize: 13, color: '#718096' }}>{organizationName}</div>
+      </>}
+
+      <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+        {role === 'MANAGER' && inviteCode && (
+          <div style={{ position: 'relative' }}>
+            <button onClick={() => setShowInvite(!showInvite)} style={{
+              ...btnStyle, padding: '7px 14px', fontSize: 12, fontWeight: 600, color: '#667eea',
+            }}>🔑 {inviteCode}</button>
+
+            {showInvite && (
+              <div style={{
+                position: 'absolute', right: 0, top: 48, zIndex: 100,
+                width: 280, padding: 20, background: '#e8ecf1', borderRadius: 16,
+                boxShadow: '8px 8px 20px rgba(163,177,198,0.6), -4px -4px 12px rgba(255,255,255,0.95)',
+              }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#2d3748', marginBottom: 4 }}>Team Invite Code</div>
+                <div style={{ fontSize: 11, color: '#a0aec0', marginBottom: 12 }}>Share with Dispatchers & Technicians only</div>
+                <div style={{
+                  ...insetStyle, padding: '14px 16px', marginBottom: 12,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <span style={{ fontFamily: 'monospace', fontSize: 22, fontWeight: 800, letterSpacing: 5, color: '#667eea' }}>{inviteCode}</span>
+                </div>
+                <button onClick={copyInvite} style={{
+                  ...btnStyle, width: '100%', padding: '10px',
+                  background: copied ? '#22c55e' : 'linear-gradient(135deg, #667eea, #764ba2)',
+                  color: 'white', fontSize: 13, fontWeight: 700,
+                  boxShadow: '4px 4px 12px rgba(102,126,234,0.4)',
+                }}>
+                  {copied ? '✓ Copied!' : '📋 Copy Code'}
+                </button>
+                <div style={{ fontSize: 11, color: '#e53e3e', marginTop: 10, fontWeight: 600 }}>⚠️ Never share with customers</div>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div style={{
+          width: 36, height: 36, borderRadius: '50%',
+          background: 'linear-gradient(135deg, #667eea, #764ba2)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: 'white', fontSize: 13, fontWeight: 700,
+          boxShadow: '3px 3px 8px rgba(163,177,198,0.6), -2px -2px 6px rgba(255,255,255,0.9)',
+        }}>{email?.charAt(0).toUpperCase()}</div>
+
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: '#2d3748' }}>{email}</div>
+          <div style={{ fontSize: 10, color: '#667eea', fontWeight: 600 }}>{role}</div>
+        </div>
+
+        <button onClick={logout} style={{ ...btnStyle, padding: '7px 14px', fontSize: 12, fontWeight: 600, color: '#e53e3e' }}>Sign out</button>
+      </div>
+    </div>
+  );
+
+  // ── STAT CARD ──
+  const StatCard = ({ icon, label, value, sub, subColor }: { icon: string; label: string; value: number | string; sub: string; subColor: string }) => (
+    <div style={{ ...cardStyle, padding: '20px 18px' }}>
+      <div style={{ fontSize: 22, marginBottom: 10 }}>{icon}</div>
+      <div style={{ fontSize: 11, color: '#a0aec0', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 28, fontWeight: 700, color: '#2d3748', lineHeight: 1 }}>{value ?? '—'}</div>
+      <div style={{ fontSize: 11, marginTop: 6, fontWeight: 600, color: subColor }}>{sub}</div>
+    </div>
+  );
+
+  // ── TABLE ──
+  const Table = ({ cols, rows, empty }: { cols: string[]; rows: React.ReactNode[][]; empty: string }) => (
+    <div style={{ overflowX: 'auto' as const }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr style={{ background: 'rgba(163,177,198,0.1)' }}>
+            {cols.map(c => (
+              <th key={c} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: '#a0aec0', textTransform: 'uppercase', letterSpacing: 0.5, whiteSpace: 'nowrap' }}>{c}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.length === 0 ? (
+            <tr><td colSpan={cols.length} style={{ textAlign: 'center', padding: 40, color: '#a0aec0', fontSize: 13 }}>{empty}</td></tr>
+          ) : rows.map((row, i) => (
+            <tr key={i} style={{ borderBottom: '1px solid rgba(163,177,198,0.15)' }}>
+              {row.map((cell, j) => (
+                <td key={j} style={{ padding: '12px 16px', fontSize: 13, color: '#4a5568' }}>{cell}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  // ── MODAL ──
+  const Modal = ({ title, onClose, onSubmit, children }: { title: string; onClose: () => void; onSubmit: () => void; children: React.ReactNode }) => (
+    <div onClick={onClose} style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.15)',
+      backdropFilter: 'blur(4px)', zIndex: 300,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        ...cardStyle, padding: 28, width: '100%', maxWidth: 480,
+        boxShadow: '12px 12px 28px rgba(163,177,198,0.7), -6px -6px 16px rgba(255,255,255,0.95)',
+      }}>
+        <div style={{ fontSize: 17, fontWeight: 700, color: '#2d3748', marginBottom: 20 }}>{title}</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>{children}</div>
+        <div style={{ display: 'flex', gap: 10, marginTop: 20, justifyContent: 'flex-end' }}>
+          <button onClick={onClose} style={{ ...btnStyle, padding: '9px 18px', fontSize: 13, fontWeight: 600, color: '#718096' }}>Cancel</button>
+          <button onClick={onSubmit} style={{
+            ...btnStyle, padding: '9px 18px', fontSize: 13, fontWeight: 700,
+            background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white',
+            boxShadow: '4px 4px 12px rgba(102,126,234,0.4)',
+          }}>Submit</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const FieldLabel = ({ children }: { children: React.ReactNode }) => (
+    <label style={{ fontSize: 12, fontWeight: 600, color: '#718096', marginBottom: 7, display: 'block' }}>{children}</label>
   );
 
   return (
-    <div style={{
-      minHeight: '100vh', width: '100%',
-      background: '#0d1117',
-      fontFamily: "'Segoe UI', sans-serif", color: 'white'
-    }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100%', background: '#e8ecf1', fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+      <Topbar />
 
-      {/* topbar */}
-      <div style={{
-        background: 'rgba(255,255,255,0.04)',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
-        padding: '0 32px', height: 60,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: 8,
-            background: 'linear-gradient(135deg, #667eea, #764ba2)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14
-          }}>⚙️</div>
-          <span style={{ fontWeight: 700, fontSize: 16 }}>KEYSTONE</span>
-          {organizationName && (
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        <Sidebar />
+
+        <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
+
+          {/* ── DASHBOARD ── */}
+          {page === 'dashboard' && (
             <>
-              <span style={{ color: '#4a5568', fontSize: 14 }}>·</span>
-              <span style={{ color: '#8892a4', fontSize: 14 }}>{organizationName}</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                <div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: '#2d3748' }}>Dashboard</div>
+                  <div style={{ fontSize: 13, color: '#a0aec0', marginTop: 3 }}>Good morning — here's what's happening today</div>
+                </div>
+                <button onClick={() => setShowCreateWO(true)} style={{
+                  ...btnStyle, padding: '10px 18px', fontSize: 13, fontWeight: 700,
+                  background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white',
+                  boxShadow: '4px 4px 12px rgba(102,126,234,0.4)',
+                }}>+ New Work Order</button>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 20 }}>
+                <StatCard icon="📋" label="Total Open" value={(summary?.newCount||0)+(summary?.assignedCount||0)+(summary?.inProgressCount||0)+(summary?.onHoldCount||0)} sub="+3 today" subColor="#38a169" />
+                <StatCard icon="⚡" label="In Progress" value={summary?.inProgressCount??'—'} sub="Active now" subColor="#38a169" />
+                <StatCard icon="🚨" label="SLA Breached" value={summary?.breachedCount??'—'} sub={(summary?.breachedCount||0)===0?'All clear ✓':'Needs action'} subColor={(summary?.breachedCount||0)===0?'#38a169':'#e53e3e'} />
+                <StatCard icon="✅" label="Closed" value={summary?.closedCount??'—'} sub="Completed" subColor="#38a169" />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                <StatCard icon="🟡" label="On Hold" value={summary?.onHoldCount??'—'} sub="Awaiting action" subColor="#d97706" />
+                <StatCard icon="⚠️" label="SLA At Risk" value={summary?.atRiskCount??'—'} sub="Monitor closely" subColor="#d97706" />
+              </div>
+
+              <div style={{ ...cardStyle, overflow: 'hidden' }}>
+                <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(163,177,198,0.2)' }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#2d3748' }}>Recent Work Orders</div>
+                  <button onClick={() => navTo('workorders')} style={{ ...btnStyle, padding: '6px 12px', fontSize: 12, color: '#667eea', fontWeight: 600 }}>View all →</button>
+                </div>
+                <Table
+                  cols={['Code', 'Title', 'Status', 'Priority', 'SLA']}
+                  empty="No work orders yet"
+                  rows={workOrders.slice(0,5).map(w => [
+                    <span style={{ fontFamily: 'monospace', color: '#667eea', fontSize: 12, fontWeight: 700 }}>{w.code}</span>,
+                    <span style={{ fontWeight: 600, color: '#2d3748', cursor: 'pointer' }} onClick={() => openWODetail(w)}>{w.title}</span>,
+                    <StatusPill status={w.status} />,
+                    <PriorityPill priority={w.priority} />,
+                    <SlaText slaStatus={w.slaStatus} />,
+                  ])}
+                />
+              </div>
             </>
           )}
-        </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          {role === 'MANAGER' && inviteCode && (
-            <div style={{ position: 'relative' }}>
-              <button onClick={() => setShowInviteCode(!showInviteCode)} style={{
-                background: 'rgba(102,126,234,0.15)', border: '1px solid rgba(102,126,234,0.3)',
-                borderRadius: 8, padding: '6px 12px', color: '#667eea',
-                fontSize: 13, fontWeight: 600, cursor: 'pointer'
-              }}>
-                🔑 Team Invite Code
-              </button>
-              {showInviteCode && (
-                <div style={{
-                  position: 'absolute', right: 0, top: 44, zIndex: 100,
-                  background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: 12, padding: 20, width: 280,
-                  boxShadow: '0 16px 48px rgba(0,0,0,0.5)'
-                }}>
-                  <p style={{ color: '#8892a4', fontSize: 12, margin: '0 0 10px' }}>
-                    Share this code with your team members (Dispatchers & Technicians)
-                  </p>
-                  <div style={{
-                    background: 'rgba(102,126,234,0.1)', border: '1px solid rgba(102,126,234,0.3)',
-                    borderRadius: 8, padding: '12px 14px', marginBottom: 12,
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between'
-                  }}>
-                    <span style={{ fontFamily: 'monospace', fontSize: 20, fontWeight: 700, letterSpacing: 3, color: '#667eea' }}>
-                      {inviteCode}
-                    </span>
-                  </div>
-                  <button onClick={copyInviteCode} style={{
-                    width: '100%', padding: '9px',
-                    background: copied ? '#22c55e' : 'linear-gradient(135deg, #667eea, #764ba2)',
-                    border: 'none', borderRadius: 8, color: 'white',
-                    fontSize: 13, fontWeight: 600, cursor: 'pointer'
-                  }}>
-                    {copied ? '✓ Copied!' : 'Copy Code'}
-                  </button>
-                  <p style={{ color: '#4a5568', fontSize: 11, margin: '10px 0 0', textAlign: 'center' }}>
-                    Never share this with customers
-                  </p>
+          {/* ── WORK ORDERS ── */}
+          {page === 'workorders' && (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                <div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: '#2d3748' }}>Work Orders</div>
+                  <div style={{ fontSize: 13, color: '#a0aec0', marginTop: 3 }}>{workOrders.length} total in your workspace</div>
                 </div>
-              )}
-            </div>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <input value={woSearch} onChange={e => setWoSearch(e.target.value)} placeholder="🔍 Search..." style={{ ...neuInput, width: 220 }} />
+                  <button onClick={() => setShowCreateWO(true)} style={{
+                    ...btnStyle, padding: '10px 18px', fontSize: 13, fontWeight: 700,
+                    background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white',
+                    boxShadow: '4px 4px 12px rgba(102,126,234,0.4)',
+                  }}>+ New</button>
+                </div>
+              </div>
+              <div style={{ ...cardStyle, overflow: 'hidden' }}>
+                <Table
+                  cols={['Code', 'Title', 'Status', 'Priority', 'SLA', 'Customer', 'Site', 'Assigned To']}
+                  empty="No work orders found"
+                  rows={filteredWO.map(w => [
+                    <span style={{ fontFamily: 'monospace', color: '#667eea', fontSize: 12, fontWeight: 700 }}>{w.code}</span>,
+                    <span style={{ fontWeight: 600, color: '#667eea', cursor: 'pointer', maxWidth: 200, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} onClick={() => openWODetail(w)}>{w.title}</span>,
+                    <StatusPill status={w.status} />,
+                    <PriorityPill priority={w.priority} />,
+                    <SlaText slaStatus={w.slaStatus} />,
+                    w.customerName || '—',
+                    w.siteName || '—',
+                    w.assignedToName || <span style={{ color: '#a0aec0' }}>Unassigned</span>,
+                  ])}
+                />
+              </div>
+            </>
           )}
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{
-              width: 32, height: 32, borderRadius: '50%',
-              background: 'linear-gradient(135deg, #667eea, #764ba2)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 13, fontWeight: 700
-            }}>
-              {email?.charAt(0).toUpperCase()}
-            </div>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600 }}>{email}</div>
-              <div style={{ fontSize: 11, color: '#667eea' }}>{role}</div>
-            </div>
-          </div>
+          {/* ── CUSTOMERS ── */}
+          {page === 'customers' && (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                <div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: '#2d3748' }}>Customers</div>
+                  <div style={{ fontSize: 13, color: '#a0aec0', marginTop: 3 }}>Manage client organizations</div>
+                </div>
+                <button onClick={() => setShowCreateCustomer(true)} style={{ ...btnStyle, padding: '10px 18px', fontSize: 13, fontWeight: 700, background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white', boxShadow: '4px 4px 12px rgba(102,126,234,0.4)' }}>+ Add Customer</button>
+              </div>
+              <div style={{ ...cardStyle, overflow: 'hidden' }}>
+                <Table
+                  cols={['ID', 'Name', 'Contact Email', 'Created']}
+                  empty="No customers yet"
+                  rows={customers.map(c => [
+                    <span style={{ color: '#667eea', fontWeight: 700 }}>#{c.id}</span>,
+                    <span style={{ fontWeight: 600, color: '#2d3748' }}>{c.name}</span>,
+                    c.contactEmail || '—',
+                    fmt(c.createdAt),
+                  ])}
+                />
+              </div>
+            </>
+          )}
 
-          <button onClick={logout} style={{
-            background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)',
-            borderRadius: 8, padding: '6px 12px', color: '#ef4444',
-            fontSize: 13, cursor: 'pointer'
-          }}>
-            Sign out
-          </button>
+          {/* ── SITES ── */}
+          {page === 'sites' && (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                <div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: '#2d3748' }}>Sites</div>
+                  <div style={{ fontSize: 13, color: '#a0aec0', marginTop: 3 }}>Building locations where work happens</div>
+                </div>
+                <button onClick={() => setShowCreateSite(true)} style={{ ...btnStyle, padding: '10px 18px', fontSize: 13, fontWeight: 700, background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white', boxShadow: '4px 4px 12px rgba(102,126,234,0.4)' }}>+ Add Site</button>
+              </div>
+              <div style={{ ...cardStyle, overflow: 'hidden' }}>
+                <Table
+                  cols={['ID', 'Name', 'Customer', 'Address']}
+                  empty="No sites yet"
+                  rows={sites.map(s => [
+                    <span style={{ color: '#667eea', fontWeight: 700 }}>#{s.id}</span>,
+                    <span style={{ fontWeight: 600, color: '#2d3748' }}>{s.name}</span>,
+                    s.customerName || '—',
+                    s.address || '—',
+                  ])}
+                />
+              </div>
+            </>
+          )}
+
+          {/* ── SLA ── */}
+          {page === 'sla' && (
+            <>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#2d3748', marginBottom: 4 }}>SLA Tracking</div>
+              <div style={{ fontSize: 13, color: '#a0aec0', marginBottom: 20 }}>Monitor service level compliance</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 20 }}>
+                <StatCard icon="🟢" label="On Track" value={((summary?.newCount||0)+(summary?.assignedCount||0)+(summary?.inProgressCount||0)+(summary?.onHoldCount||0))-(summary?.atRiskCount||0)-(summary?.breachedCount||0)} sub="Meeting SLA" subColor="#38a169" />
+                <StatCard icon="🟡" label="At Risk" value={summary?.atRiskCount??'—'} sub="Within 2hrs of breach" subColor="#d97706" />
+                <StatCard icon="🔴" label="Breached" value={summary?.breachedCount??'—'} sub="Past SLA deadline" subColor="#e53e3e" />
+              </div>
+              <div style={{ ...cardStyle, overflow: 'hidden' }}>
+                <Table
+                  cols={['Code', 'Title', 'Priority', 'SLA Due', 'SLA Status', 'Current Status']}
+                  empty="No active work orders"
+                  rows={workOrders.filter(w => !['CLOSED','CANCELLED'].includes(w.status)).map(w => [
+                    <span style={{ fontFamily: 'monospace', color: '#667eea', fontSize: 12, fontWeight: 700 }}>{w.code}</span>,
+                    <span style={{ fontWeight: 600, color: '#2d3748' }}>{w.title}</span>,
+                    <PriorityPill priority={w.priority} />,
+                    <span style={{ fontSize: 12, color: '#718096' }}>{fmt(w.slaDueAt)}</span>,
+                    <SlaText slaStatus={w.slaStatus} />,
+                    <StatusPill status={w.status} />,
+                  ])}
+                />
+              </div>
+            </>
+          )}
+
+          {/* ── TIME LOGS ── */}
+          {page === 'timelogs' && (
+            <>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#2d3748', marginBottom: 4 }}>Time Logs</div>
+              <div style={{ fontSize: 13, color: '#a0aec0', marginBottom: 20 }}>Technician time tracked per work order</div>
+              <div style={{ ...cardStyle, padding: 40, textAlign: 'center' }}>
+                <div style={{ fontSize: 40, marginBottom: 16 }}>🕐</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#4a5568', marginBottom: 8 }}>Time logs per work order</div>
+                <div style={{ fontSize: 13, color: '#a0aec0' }}>Open a work order to view its time log entries</div>
+              </div>
+            </>
+          )}
+
+          {/* ── PARTS ── */}
+          {page === 'parts' && (
+            <>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#2d3748', marginBottom: 4 }}>Parts Inventory</div>
+              <div style={{ fontSize: 13, color: '#a0aec0', marginBottom: 20 }}>Track parts stock and usage</div>
+              <div style={{ ...cardStyle, overflow: 'hidden' }}>
+                <Table
+                  cols={['SKU', 'Name', 'Unit Cost', 'Stock Qty', 'Status']}
+                  empty="No parts seeded"
+                  rows={[
+                    ['REF-410A', 'Refrigerant R410A (lb)', '$45.00', '100', <Pill text="In Stock" bg="#dcfce7" color="#16a34a" />],
+                    ['CAP-355', 'Capacitor 35/5 MFD', '$22.50', '49', <Pill text="In Stock" bg="#dcfce7" color="#16a34a" />],
+                    ['FLT-2020', 'Air Filter 20×20', '$15.00', '200', <Pill text="In Stock" bg="#dcfce7" color="#16a34a" />],
+                    ['CON-40A', 'Contactor 40A', '$38.00', '5', <Pill text="Low Stock" bg="#fef3c7" color="#d97706" />],
+                  ].map(r => r.map((c, i) => typeof c === 'string' ? <span style={i===1?{fontWeight:600,color:'#2d3748'}:i===0?{fontFamily:'monospace',color:'#667eea',fontWeight:700}:{}}>{c}</span> : c))}
+                />
+              </div>
+            </>
+          )}
+
+          {/* ── TEAM ── */}
+          {page === 'team' && (
+            <>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#2d3748', marginBottom: 4 }}>Team</div>
+              <div style={{ fontSize: 13, color: '#a0aec0', marginBottom: 20 }}>Members in your organization workspace</div>
+              <div style={{ ...cardStyle, padding: 28 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#a0aec0', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 14 }}>Your Workspace Invite Code</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+                  <div style={{ ...insetStyle, flex: 1, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontFamily: 'monospace', fontSize: 24, fontWeight: 800, letterSpacing: 6, color: '#667eea' }}>{inviteCode || 'N/A'}</span>
+                  </div>
+                  <button onClick={copyInvite} style={{ ...btnStyle, padding: '12px 18px', fontSize: 13, fontWeight: 700, background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white', boxShadow: '4px 4px 12px rgba(102,126,234,0.4)' }}>
+                    {copied ? '✓ Copied!' : 'Copy'}
+                  </button>
+                </div>
+                <div style={{ fontSize: 12, color: '#a0aec0' }}>Share this code with Dispatchers and Technicians only. Customers should not receive this code.</div>
+              </div>
+            </>
+          )}
+
+          {/* ── WO DETAIL ── */}
+          {page === 'wo-detail' && selectedWO && (
+            <>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
+                <div>
+                  <button onClick={() => { setPage('workorders'); loadWorkOrders(); }} style={{ ...btnStyle, padding: '7px 14px', fontSize: 12, color: '#718096', marginBottom: 10 }}>← Back to Work Orders</button>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: '#2d3748' }}>{selectedWO.code} — {selectedWO.title}</div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 16 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {/* main card */}
+                  <div style={{ ...cardStyle, padding: 20 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                      <span style={{ fontFamily: 'monospace', color: '#667eea', fontSize: 13, fontWeight: 700 }}>{selectedWO.code}</span>
+                      <StatusPill status={selectedWO.status} />
+                      <PriorityPill priority={selectedWO.priority} />
+                    </div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: '#2d3748', marginBottom: 10 }}>{selectedWO.title} — {selectedWO.siteName}</div>
+                    <div style={{ fontSize: 14, color: '#718096', lineHeight: 1.6 }}>{selectedWO.description || 'No description provided.'}</div>
+                  </div>
+
+                  {/* history */}
+                  <div style={{ ...cardStyle, padding: 20 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#a0aec0', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 16 }}>Status History</div>
+                    {woHistory.length === 0 ? (
+                      <div style={{ color: '#a0aec0', fontSize: 13 }}>No history yet</div>
+                    ) : woHistory.map((h, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 12, paddingBottom: 14, position: 'relative' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                          <div style={{
+                            width: 28, height: 28, borderRadius: '50%',
+                            background: '#38a169', color: 'white',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0,
+                            boxShadow: '3px 3px 7px rgba(163,177,198,0.5), -2px -2px 5px rgba(255,255,255,0.9)',
+                          }}>✓</div>
+                          {i < woHistory.length - 1 && <div style={{ width: 2, flex: 1, background: 'rgba(163,177,198,0.3)', marginTop: 4, minHeight: 14 }} />}
+                        </div>
+                        <div style={{ paddingTop: 4 }}>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#2d3748' }}>{h.fromStatus || '—'} → {h.toStatus} · {h.changedByName || 'system'}</div>
+                          <div style={{ fontSize: 11, color: '#a0aec0', marginTop: 2 }}>{fmt(h.changedAt)}</div>
+                          {h.note && <div style={{ fontSize: 12, color: '#718096', fontStyle: 'italic', marginTop: 3 }}>"{h.note}"</div>}
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* current pending */}
+                    <div style={{ display: 'flex', gap: 12 }}>
+                      <div style={{
+                        width: 28, height: 28, borderRadius: '50%',
+                        background: '#e8ecf1', color: '#d97706',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0,
+                        boxShadow: 'inset 2px 2px 5px rgba(163,177,198,0.4), inset -1px -1px 3px rgba(255,255,255,0.9)',
+                      }}>●</div>
+                      <div style={{ paddingTop: 4 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#2d3748' }}>Awaiting next transition</div>
+                        <div style={{ fontSize: 11, color: '#a0aec0', marginTop: 2 }}>Current</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* right panel */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div style={{ ...cardStyle, padding: 18 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#a0aec0', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 14 }}>Details</div>
+                    {[
+                      ['Customer', selectedWO.customerName || '—'],
+                      ['Site', selectedWO.siteName || '—'],
+                      ['Assigned', selectedWO.assignedToName || 'Unassigned'],
+                      ['SLA Due', fmt(selectedWO.slaDueAt)],
+                    ].map(([k, v]) => (
+                      <div key={k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, fontSize: 13 }}>
+                        <span style={{ color: '#a0aec0' }}>{k}</span>
+                        <span style={{ color: '#2d3748', fontWeight: 600 }}>{v}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ ...cardStyle, padding: 18 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#a0aec0', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 14 }}>SLA Status</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 13 }}>
+                      <span style={{ color: '#a0aec0' }}>Status</span>
+                      <SlaText slaStatus={selectedWO.slaStatus} />
+                    </div>
+                  </div>
+
+                  <div style={{ ...cardStyle, padding: 18 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#a0aec0', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 14 }}>Parts Used</div>
+                    {woParts.length === 0 ? (
+                      <div style={{ color: '#a0aec0', fontSize: 13 }}>No parts logged</div>
+                    ) : (
+                      <>
+                        {woParts.map((p, i) => (
+                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 13 }}>
+                            <span style={{ color: '#718096' }}>{p.partName} ×{p.qtyUsed}</span>
+                            <span style={{ color: '#2d3748', fontWeight: 600 }}>${p.totalCost}</span>
+                          </div>
+                        ))}
+                        <div style={{ borderTop: '1px solid rgba(163,177,198,0.3)', paddingTop: 10, marginTop: 6, display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                          <span style={{ color: '#a0aec0' }}>Total</span>
+                          <span style={{ fontWeight: 700, color: '#2d3748' }}>${woParts.reduce((a, p) => a + parseFloat(String(p.totalCost) || '0'), 0).toFixed(2)}</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
         </div>
       </div>
 
-      {/* content */}
-      <div style={{ padding: '32px', maxWidth: 1200, margin: '0 auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
-          <div>
-            <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Work Orders</h2>
-            <p style={{ margin: '4px 0 0', color: '#8892a4', fontSize: 14 }}>
-              {workOrders.length} total · manage and track field service jobs
-            </p>
+      {/* ── MODALS ── */}
+      {showCreateWO && (
+        <Modal title="Create Work Order" onClose={() => setShowCreateWO(false)} onSubmit={createWO}>
+          <div><FieldLabel>Title</FieldLabel><input value={woForm.title} onChange={e => setWoForm({...woForm, title: e.target.value})} placeholder="Brief description" style={neuInput} /></div>
+          <div><FieldLabel>Description</FieldLabel><textarea value={woForm.description} onChange={e => setWoForm({...woForm, description: e.target.value})} placeholder="Detailed description..." rows={3} style={{ ...neuInput, resize: 'vertical' as const }} /></div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div><FieldLabel>Priority</FieldLabel>
+              <select value={woForm.priority} onChange={e => setWoForm({...woForm, priority: e.target.value})} style={{ ...neuInput, appearance: 'none' }}>
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="URGENT">Urgent</option>
+              </select>
+            </div>
+            <div><FieldLabel>Customer ID</FieldLabel><input type="number" value={woForm.customerId} onChange={e => setWoForm({...woForm, customerId: e.target.value})} placeholder="e.g. 1" style={neuInput} /></div>
           </div>
-        </div>
+          <div><FieldLabel>Site ID</FieldLabel><input type="number" value={woForm.siteId} onChange={e => setWoForm({...woForm, siteId: e.target.value})} placeholder="e.g. 1" style={neuInput} /></div>
+        </Modal>
+      )}
 
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: 80, color: '#8892a4' }}>Loading work orders...</div>
-        ) : workOrders.length === 0 ? (
-          <div style={{
-            textAlign: 'center', padding: 80,
-            background: 'rgba(255,255,255,0.03)', borderRadius: 16,
-            border: '1px solid rgba(255,255,255,0.07)'
-          }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>📋</div>
-            <h3 style={{ color: 'white', margin: '0 0 8px' }}>No work orders yet</h3>
-            <p style={{ color: '#8892a4', margin: 0, fontSize: 14 }}>Work orders will appear here once created</p>
-          </div>
-        ) : (
-          <div style={{
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.07)',
-            borderRadius: 16, overflow: 'hidden'
-          }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-                  {['Code', 'Title', 'Status', 'Priority', 'SLA', 'Customer', 'Site', 'Assigned To'].map(h => (
-                    <th key={h} style={{
-                      padding: '14px 16px', textAlign: 'left',
-                      fontSize: 12, fontWeight: 600, color: '#8892a4',
-                      textTransform: 'uppercase', letterSpacing: 0.5
-                    }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {workOrders.map((wo, i) => (
-                  <tr key={wo.id} style={{
-                    borderBottom: i < workOrders.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
-                    transition: 'background 0.15s'
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                    <td style={{ padding: '14px 16px' }}>
-                      <span style={{ fontFamily: 'monospace', fontSize: 12, color: '#667eea', fontWeight: 600 }}>{wo.code}</span>
-                    </td>
-                    <td style={{ padding: '14px 16px', fontSize: 14, fontWeight: 500, maxWidth: 220 }}>
-                      <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{wo.title}</div>
-                    </td>
-                    <td style={{ padding: '14px 16px' }}>{badge(wo.status, STATUS_COLORS[wo.status] || '#6b7280')}</td>
-                    <td style={{ padding: '14px 16px' }}>{badge(wo.priority, PRIORITY_COLORS[wo.priority] || '#6b7280')}</td>
-                    <td style={{ padding: '14px 16px' }}>{badge(wo.slaStatus || 'N/A', SLA_COLORS[wo.slaStatus] || '#6b7280')}</td>
-                    <td style={{ padding: '14px 16px', fontSize: 13, color: '#b0bac9' }}>{wo.customerName}</td>
-                    <td style={{ padding: '14px 16px', fontSize: 13, color: '#b0bac9' }}>{wo.siteName}</td>
-                    <td style={{ padding: '14px 16px', fontSize: 13, color: wo.assignedToName ? '#b0bac9' : '#4a5568' }}>
-                      {wo.assignedToName || '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {showCreateCustomer && (
+        <Modal title="Add Customer" onClose={() => setShowCreateCustomer(false)} onSubmit={createCustomer}>
+          <div><FieldLabel>Company Name</FieldLabel><input value={custForm.name} onChange={e => setCustForm({...custForm, name: e.target.value})} placeholder="e.g. Meridian Facilities" style={neuInput} /></div>
+          <div><FieldLabel>Contact Email</FieldLabel><input type="email" value={custForm.contactEmail} onChange={e => setCustForm({...custForm, contactEmail: e.target.value})} placeholder="ops@company.com" style={neuInput} /></div>
+        </Modal>
+      )}
+
+      {showCreateSite && (
+        <Modal title="Add Site" onClose={() => setShowCreateSite(false)} onSubmit={createSite}>
+          <div><FieldLabel>Customer ID</FieldLabel><input type="number" value={siteForm.customerId} onChange={e => setSiteForm({...siteForm, customerId: e.target.value})} placeholder="e.g. 1" style={neuInput} /></div>
+          <div><FieldLabel>Site Name</FieldLabel><input value={siteForm.name} onChange={e => setSiteForm({...siteForm, name: e.target.value})} placeholder="e.g. Downtown Office Tower" style={neuInput} /></div>
+          <div><FieldLabel>Address</FieldLabel><input value={siteForm.address} onChange={e => setSiteForm({...siteForm, address: e.target.value})} placeholder="123 Main St" style={neuInput} /></div>
+        </Modal>
+      )}
+
+      {/* ── TOAST ── */}
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: 24, right: 24, zIndex: 400,
+          padding: '12px 20px', borderRadius: 12,
+          background: '#e8ecf1', fontSize: 13, fontWeight: 600, color: '#38a169',
+          boxShadow: '6px 6px 16px rgba(163,177,198,0.6), -3px -3px 10px rgba(255,255,255,0.9)',
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          ✓ {toast}
+        </div>
+      )}
+
+      {/* close invite on outside click */}
+      {showInvite && <div onClick={() => setShowInvite(false)} style={{ position: 'fixed', inset: 0, zIndex: 50 }} />}
     </div>
   );
 }
