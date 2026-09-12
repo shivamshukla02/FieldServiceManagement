@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import client from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import registerBg from '../assets/register-bg.png';
 
 const ROLES = [
   { value: 'MANAGER', label: 'Manager', desc: 'Create workspace, manage team and all reports', icon: '👔' },
@@ -122,18 +121,26 @@ export default function Register() {
       fontFamily: "'Segoe UI', sans-serif",
       overflow: 'hidden', padding: 20
     }}>
-      {/* background image layer - stretched to fill exactly, no cropping, no empty space */}
-      <img
-        src={registerBg}
-        alt=""
-        style={{
-          position: 'absolute',
-          top: 0, left: 0,
-          width: '100%', height: '100%',
-          objectFit: 'fill',
-          zIndex: 0
-        }}
-      />
+      {/* animated gradient + blob background */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+        background: 'linear-gradient(135deg, #ecfdf5 0%, #eff6ff 25%, #f5f3ff 50%, #fdf4ff 75%, #ecfdf5 100%)',
+        zIndex: 0
+      }}>
+        {[
+          { w: 500, h: 500, top: '-15%', right: '-10%', color: 'rgba(34,197,94,0.25)' },
+          { w: 450, h: 450, bottom: '-10%', left: '-10%', color: 'rgba(99,102,241,0.3)' },
+          { w: 350, h: 350, top: '35%', left: '20%', color: 'rgba(236,72,153,0.2)' },
+          { w: 300, h: 300, bottom: '15%', right: '15%', color: 'rgba(249,115,22,0.18)' },
+        ].map((b, i) => (
+          <div key={i} style={{
+            position: 'absolute', width: b.w, height: b.h, borderRadius: '50%',
+            background: b.color, filter: 'blur(100px)',
+            top: b.top, left: b.left, bottom: b.bottom, right: b.right,
+            pointerEvents: 'none'
+          }} />
+        ))}
+      </div>
 
       <div style={{ width: '100%', maxWidth: step === 2 ? 560 : 460, position: 'relative', zIndex: 1, maxHeight: '95vh', overflowY: 'auto' }}>
 

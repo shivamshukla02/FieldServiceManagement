@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import client from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import loginBg from '../assets/login-bg.png';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -38,18 +37,26 @@ export default function Login() {
       fontFamily: "'Segoe UI', sans-serif",
       overflow: 'hidden'
     }}>
-      {/* background image layer - stretched to fill exactly, no cropping, no empty space */}
-      <img
-        src={loginBg}
-        alt=""
-        style={{
-          position: 'absolute',
-          top: 0, left: 0,
-          width: '100%', height: '100%',
-          objectFit: 'fill',
-          zIndex: 0
-        }}
-      />
+      {/* animated gradient + blob background */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+        background: 'linear-gradient(135deg, #e0e7ff 0%, #f0f4ff 25%, #fdf2f8 50%, #eff6ff 75%, #e0e7ff 100%)',
+        zIndex: 0
+      }}>
+        {[
+          { w: 500, h: 500, top: '-10%', left: '-10%', color: 'rgba(99,102,241,0.35)' },
+          { w: 450, h: 450, bottom: '-15%', right: '-10%', color: 'rgba(168,85,247,0.3)' },
+          { w: 350, h: 350, top: '30%', right: '15%', color: 'rgba(56,189,248,0.25)' },
+          { w: 300, h: 300, bottom: '10%', left: '10%', color: 'rgba(244,114,182,0.2)' },
+        ].map((b, i) => (
+          <div key={i} style={{
+            position: 'absolute', width: b.w, height: b.h, borderRadius: '50%',
+            background: b.color, filter: 'blur(100px)',
+            top: b.top, left: b.left, bottom: b.bottom, right: b.right,
+            pointerEvents: 'none'
+          }} />
+        ))}
+      </div>
 
       <div style={{ width: '100%', maxWidth: 420, padding: '0 20px', position: 'relative', zIndex: 1 }}>
 
