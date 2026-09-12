@@ -15,17 +15,14 @@ import {
   LayoutDashboard,
   ListFilter,
   LogOut,
-  Menu,
   Moon,
   MoreHorizontal,
   Package,
   Plus,
   Search,
-  Settings2,
   ShieldCheck,
   Sun,
   Trash2,
-  UserPlus,
   Users,
   X,
   Zap,
@@ -34,7 +31,6 @@ import {
   useEffect,
   useState,
   type CSSProperties,
-  type FormEvent,
   type ReactNode,
   type ElementType,
 } from 'react';
@@ -142,7 +138,6 @@ const PART_STATUS_COLORS: Record<string, string> = {
   OUT_OF_STOCK: 'status-hold',
 };
 
-// Moved MapPinIcon definition above navItems to avoid initialization reference errors
 function MapPinIcon({
   size = 18,
   strokeWidth = 2,
@@ -336,18 +331,6 @@ function PartStatusPill({ status }: { status: PartRow['status'] }) {
     />
   );
 }
-
-function Logo() {
-  return (
-    <div className="workorder-brand">
-      <span className="workorder-brand-mark">
-        <HardHat size={19} strokeWidth={2.2} />
-      </span>
-      <span>Keystone</span>
-    </div>
-  );
-}
-
 function Modal({
   title,
   description,
@@ -2683,7 +2666,7 @@ export default function WorkOrderList() {
                       >
                         <input
                           className="workorder-input"
-                          value={role === 'MANAGER' ? inviteCode : ''}
+                          value={role === 'MANAGER' ? inviteCode || '' : ''}
                           readOnly
                           placeholder="Invite code unavailable"
                         />
