@@ -1,38 +1,143 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import type { FormEvent } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import client from '../api/client';
 import { useAuth } from '../context/AuthContext';
 
+const REGISTER_BACKGROUND =
+  '/attached_assets/ChatGPT_Image_Sep_12,_2026,_12_17_40_PM_1789196335766.png';
+
 const ROLES = [
-  { value: 'MANAGER', label: 'Manager', desc: 'Create workspace, manage team and view all reports', icon: '👨‍💼' },
-  { value: 'DISPATCHER', label: 'Dispatcher', desc: 'Create and assign work orders to technicians', icon: '📋' },
-  { value: 'TECHNICIAN', label: 'Technician', desc: 'View and update your assigned field jobs', icon: '🔧' },
-  { value: 'CUSTOMER', label: 'Customer', desc: 'Raise requests and track service status', icon: '👥' },
-];
+  {
+    value: 'MANAGER',
+    label: 'Manager',
+    description: 'Create workspace, manage team and view all reports',
+    icon: '▥',
+    tone: 'purple',
+  },
+  {
+    value: 'DISPATCHER',
+    label: 'Dispatcher',
+    description: 'Create and assign work orders to technicians',
+    icon: '▤',
+    tone: 'orange',
+  },
+  {
+    value: 'TECHNICIAN',
+    label: 'Technician',
+    description: 'View and update your assigned field jobs',
+    icon: '⌕',
+    tone: 'green',
+  },
+  {
+    value: 'CUSTOMER',
+    label: 'Customer',
+    description: 'Raise requests and track service status',
+    icon: '♣',
+    tone: 'blue',
+  },
+] as const;
+
+function EyeIcon({ crossed = false }: { crossed?: boolean }) {
+  return crossed ? (
+    <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 4.3A10.8 10.8 0 0 1 12 4c6.5 0 10 8 10 8a18 18 0 0 1-3.1 4.3M6.2 6.2C3.5 8 2 12 2 12s3.5 8 10 8a10 10 0 0 0 3.4-.6"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  ) : (
+    <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"
+        stroke="currentColor"
+        strokeWidth="1.7"
+      />
+      <circle cx="12" cy="12" r="2.5" stroke="currentColor" strokeWidth="1.7" />
+    </svg>
+  );
+}
 
 function PasswordStrength({ password }: { password: string }) {
-  const checks = [
-    { label: '8+ chars', pass: password.length >= 8 },
-    { label: 'Uppercase', pass: /[A-Z]/.test(password) },
-    { label: 'Lowercase', pass: /[a-z]/.test(password) },
-    { label: 'Number', pass: /[0-9]/.test(password) },
-  ];
-  const score = checks.filter(c => c.pass).length;
-  const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e'];
   if (!password) return null;
+
+  const checks = [
+    {
+      label: '8+ chars',
+      valid: password.length >= 8,
+    },
+    {
+      label: 'Uppercase',
+      valid: /[A-Z]/.test(password),
+    },
+    {
+      label: 'Lowercase',
+      valid: /[a-z]/.test(password),
+    },
+    {
+      label: 'Number',
+      valid: /[0-9]/.test(password),
+    },
+  ];
+
+  const score = checks.filter((check) => check.valid).length;
+
   return (
-    <div style={{ marginTop: 8 }}>
-      <div style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
-        {[1,2,3,4].map(i => (
-          <div key={i} style={{ flex: 1, height: 4, borderRadius: 2, background: i <= score ? colors[score-1] : '#e2e8f0', transition: 'background 0.3s' }} />
+    <div className="password-strength" aria-live="polite">
+      <div className="strength-bars">
+        {[1, 2, 3, 4].map((bar) => (
+          <span
+            key={bar}
+            className={bar <= score ? `strength-${score}` : ''}
+          />
         ))}
       </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {checks.map(c => (
-          <span key={c.label} style={{ fontSize: 11, fontWeight: 500, color: c.pass ? '#22c55e' : '#94a3b8' }}>
-            {c.pass ? '✓' : '○'} {c.label}
+
+      <div className="strength-checks">
+        {checks.map((check) => (
+          <span
+            key={check.label}
+            className={check.valid ? 'valid' : ''}
+          >
+            {check.valid ? '✓' : '○'} {check.label}
           </span>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function Progress({ step }: { step: number }) {
+  return (
+    <div
+      className="progress"
+      aria-label={`Registration step ${step} of 3`}
+    >
+      <div
+        className={`progress-node ${
+          step > 1 ? 'complete' : step === 1 ? 'active' : ''
+        }`}
+      >
+        {step > 1 ? '✓' : '1'}
+      </div>
+
+      <div className={`progress-line ${step > 1 ? 'complete' : ''}`} />
+
+      <div
+        className={`progress-node ${
+          step > 2 ? 'complete' : step === 2 ? 'active' : ''
+        }`}
+      >
+        {step > 2 ? '✓' : '2'}
+      </div>
+
+      <div className={`progress-line ${step > 2 ? 'complete' : ''}`} />
+
+      <div className={`progress-node ${step === 3 ? 'active' : ''}`}>
+        3
       </div>
     </div>
   );
@@ -49,219 +154,1103 @@ export default function Register() {
   const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const passwordValid = password.length >= 8 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password);
+  const passwordValid =
+    password.length >= 8 &&
+    /[A-Z]/.test(password) &&
+    /[a-z]/.test(password) &&
+    /[0-9]/.test(password);
 
-  const handleStep1 = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAccountStep = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setError('');
-    if (!name.trim()) { setError('Name is required'); return; }
-    if (!email.trim()) { setError('Email is required'); return; }
-    if (!passwordValid) { setError('Password must meet all requirements'); return; }
+
+    if (!name.trim()) {
+      setError('Name is required');
+      return;
+    }
+
+    if (!email.trim()) {
+      setError('Email is required');
+      return;
+    }
+
+    if (!passwordValid) {
+      setError('Password must meet all requirements');
+      return;
+    }
+
     setStep(2);
   };
 
-  const handleRoleSelect = (r: string) => { setRole(r); setStep(3); };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleRoleSelect = (selectedRole: string) => {
+    setRole(selectedRole);
     setError('');
-    if (role === 'MANAGER' && !organizationName.trim()) { setError('Organization name is required'); return; }
-    if ((role === 'DISPATCHER' || role === 'TECHNICIAN') && !inviteCode.trim()) { setError('Invite code is required'); return; }
+    setStep(3);
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError('');
+
+    if (role === 'MANAGER' && !organizationName.trim()) {
+      setError('Organization name is required');
+      return;
+    }
+
+    if (
+      (role === 'DISPATCHER' || role === 'TECHNICIAN') &&
+      !inviteCode.trim()
+    ) {
+      setError('Invite code is required');
+      return;
+    }
+
     setLoading(true);
+
     try {
-      const res = await client.post('/auth/register', {
-        name, email, password, role,
-        organizationName: role === 'MANAGER' ? organizationName : undefined,
-        inviteCode: (role === 'DISPATCHER' || role === 'TECHNICIAN') ? inviteCode.toUpperCase() : undefined
+      const response = await client.post('/auth/register', {
+        name,
+        email,
+        password,
+        role,
+        organizationName:
+          role === 'MANAGER' ? organizationName : undefined,
+        inviteCode:
+          role === 'DISPATCHER' || role === 'TECHNICIAN'
+            ? inviteCode.toUpperCase()
+            : undefined,
       });
-      login(res.data.token, res.data.email, res.data.role, res.data.organizationId?.toString(), res.data.organizationName, res.data.inviteCode);
+
+      login(
+        response.data.token,
+        response.data.email,
+        response.data.role,
+        response.data.organizationId?.toString(),
+        response.data.organizationName,
+        response.data.inviteCode,
+      );
+
       navigate('/work-orders');
-    } catch (err: any) {
-      setError(err.response?.data || 'Registration failed');
+    } catch (requestError: any) {
+      const message =
+        typeof requestError?.response?.data === 'string'
+          ? requestError.response.data
+          : 'Registration failed';
+
+      setError(message);
       setStep(1);
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div style={{
-      minHeight: '100vh', width: '100%',
-      /* Match background to screenshot */
-      background: 'url(https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80) center/cover no-repeat',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-      padding: 20, boxSizing: 'border-box'
-    }}>
+    <main className="auth-page register-page">
       <style>{`
-        .input-wrapper:focus-within { border-color: #6366f1 !important; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important; }
-        .role-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; cursor: pointer; position: relative; transition: all 0.2s; }
-        .role-card:hover { border-color: #6366f1; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1); }
-        .role-card.selected { border-color: #6366f1; background: #f8fafc; box-shadow: 0 0 0 1px #6366f1; }
-        .btn-primary:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+        .auth-page {
+          min-height: 100vh;
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-sizing: border-box;
+          padding: 24px 16px;
+          position: relative;
+          isolation: isolate;
+          overflow: hidden;
+          font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          color: #091638;
+        }
+
+        .register-page {
+          background:
+            linear-gradient(90deg, rgba(238, 247, 255, .08), rgba(242, 247, 255, .16)),
+            url("${REGISTER_BACKGROUND}") center / cover no-repeat;
+        }
+
+        .auth-page::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          z-index: -1;
+          background: rgba(235, 244, 255, .05);
+          pointer-events: none;
+        }
+
+        .register-card {
+          width: min(100%, 440px);
+          box-sizing: border-box;
+          padding: 24px 22px 20px;
+          border: 1px solid rgba(255, 255, 255, .78);
+          border-radius: 15px;
+          background: rgba(248, 251, 255, .82);
+          box-shadow:
+            0 18px 45px rgba(38, 67, 112, .13),
+            inset 0 1px rgba(255, 255, 255, .72);
+          backdrop-filter: blur(18px);
+          -webkit-backdrop-filter: blur(18px);
+          transition: width .2s ease;
+        }
+
+        .register-title {
+          margin: 0 0 15px;
+          color: #091638;
+          font-size: 15px;
+          line-height: 1.2;
+          font-weight: 750;
+          letter-spacing: -.02em;
+        }
+
+        .progress {
+          display: flex;
+          align-items: center;
+          width: 100%;
+          margin-bottom: 18px;
+        }
+
+        .progress-node {
+          width: 18px;
+          height: 18px;
+          flex: 0 0 18px;
+          display: grid;
+          place-items: center;
+          box-sizing: border-box;
+          border: 1px solid #d5ddeb;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, .72);
+          color: #6e7c94;
+          font-size: 8px;
+          font-weight: 750;
+        }
+
+        .progress-node.active {
+          border-color: #5a4de5;
+          background: #5a4de5;
+          color: white;
+          box-shadow: 0 3px 8px rgba(90, 77, 229, .2);
+        }
+
+        .progress-node.complete {
+          border-color: #2cbd79;
+          background: #2cbd79;
+          color: white;
+        }
+
+        .progress-line {
+          height: 1px;
+          flex: 1;
+          margin: 0 6px;
+          background: #dce3ef;
+        }
+
+        .progress-line.complete {
+          background: #2cbd79;
+        }
+
+        .section-title {
+          margin: 0 0 3px;
+          color: #132044;
+          font-size: 13px;
+          line-height: 1.2;
+          font-weight: 750;
+        }
+
+        .section-description {
+          margin: 0 0 12px;
+          color: #718098;
+          font-size: 8px;
+          line-height: 1.4;
+        }
+
+        .role-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 9px;
+        }
+
+        .role-card {
+          min-height: 77px;
+          position: relative;
+          padding: 10px;
+          border: 1px solid rgba(222, 229, 240, .95);
+          border-radius: 8px;
+          background: rgba(255, 255, 255, .46);
+          color: #14203d;
+          text-align: left;
+          cursor: pointer;
+          transition:
+            border-color .18s ease,
+            box-shadow .18s ease,
+            transform .18s ease,
+            background .18s ease;
+        }
+
+        .role-card:hover,
+        .role-card.selected {
+          border-color: #9e98ed;
+          background: rgba(251, 251, 255, .8);
+          box-shadow: 0 4px 12px rgba(90, 77, 229, .08);
+          transform: translateY(-1px);
+        }
+
+        .role-icon {
+          width: 21px;
+          height: 21px;
+          display: grid;
+          place-items: center;
+          margin-bottom: 5px;
+          border-radius: 5px;
+          font-size: 13px;
+          font-weight: 800;
+        }
+
+        .role-icon.purple {
+          background: #e6dcff;
+          color: #6e4bc6;
+        }
+
+        .role-icon.orange {
+          background: #ffead5;
+          color: #df7b22;
+        }
+
+        .role-icon.green {
+          background: #d7f4e6;
+          color: #239867;
+        }
+
+        .role-icon.blue {
+          background: #d9ebff;
+          color: #3f81ca;
+        }
+
+        .role-name {
+          display: block;
+          margin-bottom: 3px;
+          font-size: 9px;
+          font-weight: 750;
+        }
+
+        .role-description {
+          display: block;
+          max-width: 145px;
+          color: #718098;
+          font-size: 7px;
+          line-height: 1.35;
+        }
+
+        .role-check {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          width: 13px;
+          height: 13px;
+          display: grid;
+          place-items: center;
+          border-radius: 50%;
+          background: #5a4de5;
+          color: white;
+          font-size: 8px;
+          font-weight: 800;
+        }
+
+        .field {
+          margin-bottom: 11px;
+        }
+
+        .field-label {
+          display: block;
+          margin: 0 0 4px;
+          color: #4e5d78;
+          font-size: 8px;
+          line-height: 1;
+          font-weight: 650;
+        }
+
+        .input-shell {
+          display: flex;
+          align-items: center;
+          min-height: 27px;
+          box-sizing: border-box;
+          padding: 0 8px;
+          border: 1px solid rgba(197, 207, 225, .85);
+          border-radius: 6px;
+          background: rgba(255, 255, 255, .65);
+          color: #96a2b4;
+          transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+        }
+
+        .input-shell:focus-within {
+          border-color: #6658e9;
+          background: rgba(255, 255, 255, .9);
+          box-shadow: 0 0 0 3px rgba(102, 88, 233, .12);
+        }
+
+        .input-shell input {
+          width: 100%;
+          min-width: 0;
+          padding: 6px 7px;
+          border: 0;
+          outline: 0;
+          background: transparent;
+          color: #182642;
+          font: inherit;
+          font-size: 9px;
+        }
+
+        .input-shell input::placeholder {
+          color: #a2adbd;
+        }
+
+        .password-toggle {
+          display: grid;
+          flex: 0 0 auto;
+          place-items: center;
+          padding: 0;
+          border: 0;
+          background: transparent;
+          color: #96a2b4;
+          cursor: pointer;
+        }
+
+        .password-strength {
+          margin-top: 6px;
+        }
+
+        .strength-bars {
+          display: flex;
+          gap: 3px;
+          margin-bottom: 5px;
+        }
+
+        .strength-bars span {
+          height: 3px;
+          flex: 1;
+          border-radius: 2px;
+          background: #e2e8f0;
+        }
+
+        .strength-bars span.strength-1 {
+          background: #ef4444;
+        }
+
+        .strength-bars span.strength-2 {
+          background: #f97316;
+        }
+
+        .strength-bars span.strength-3 {
+          background: #eab308;
+        }
+
+        .strength-bars span.strength-4 {
+          background: #22c55e;
+        }
+
+        .strength-checks {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 5px 9px;
+        }
+
+        .strength-checks span {
+          color: #94a3b8;
+          font-size: 7px;
+          font-weight: 550;
+        }
+
+        .strength-checks span.valid {
+          color: #22a66a;
+        }
+
+        .auth-error {
+          margin: 0 0 10px;
+          padding: 7px 8px;
+          border: 1px solid #fecaca;
+          border-radius: 6px;
+          background: #fff1f2;
+          color: #c2413e;
+          font-size: 9px;
+          line-height: 1.35;
+        }
+
+        .primary-button {
+          width: 100%;
+          min-height: 27px;
+          border: 0;
+          border-radius: 6px;
+          background: linear-gradient(100deg, #6554ee, #5551e9);
+          color: white;
+          font: inherit;
+          font-size: 9px;
+          font-weight: 700;
+          cursor: pointer;
+          box-shadow: 0 5px 12px rgba(91, 77, 231, .2);
+          transition: transform .18s ease, filter .18s ease;
+        }
+
+        .primary-button:hover:not(:disabled) {
+          filter: brightness(1.06);
+          transform: translateY(-1px);
+        }
+
+        .primary-button:disabled {
+          cursor: not-allowed;
+          opacity: .65;
+        }
+
+        .text-button {
+          margin-top: 13px;
+          padding: 0;
+          border: 0;
+          background: transparent;
+          color: #718098;
+          font: inherit;
+          font-size: 8px;
+          cursor: pointer;
+        }
+
+        .text-button:hover {
+          color: #5549dd;
+        }
+
+        .auth-footer {
+          margin: 13px 0 0;
+          color: #8793a8;
+          text-align: center;
+          font-size: 8px;
+        }
+
+        .auth-footer a {
+          color: #5549dd;
+          font-weight: 750;
+          text-decoration: none;
+        }
+
+        .auth-footer a:hover {
+          text-decoration: underline;
+        }
+
+        .setup-note {
+          margin: 0 0 13px;
+          padding: 10px;
+          border: 1px solid rgba(222, 229, 240, .95);
+          border-radius: 7px;
+          background: rgba(255, 255, 255, .45);
+          color: #596881;
+          font-size: 8px;
+          line-height: 1.45;
+        }
+
+        .invite-input {
+          text-align: center;
+          letter-spacing: .16em;
+          font-weight: 750;
+        }
+
+        @media (min-width: 560px) {
+          .register-card {
+            padding: 30px 28px 24px;
+          }
+
+          .register-title {
+            font-size: 20px;
+            margin-bottom: 20px;
+          }
+
+          .progress {
+            margin-bottom: 23px;
+          }
+
+          .progress-node {
+            width: 23px;
+            height: 23px;
+            flex-basis: 23px;
+            font-size: 10px;
+          }
+
+          .section-title {
+            font-size: 17px;
+          }
+
+          .section-description {
+            font-size: 10px;
+            margin-bottom: 16px;
+          }
+
+          .role-grid {
+            gap: 12px;
+          }
+
+          .role-card {
+            min-height: 108px;
+            padding: 14px;
+          }
+
+          .role-icon {
+            width: 28px;
+            height: 28px;
+            font-size: 17px;
+            margin-bottom: 7px;
+          }
+
+          .role-name {
+            font-size: 12px;
+          }
+
+          
+                  .role-description {
+          display: block;
+          max-width: 145px;
+          color: #718098;
+          font-size: 7px;
+          line-height: 1.35;
+        }
+
+        .role-check {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          width: 13px;
+          height: 13px;
+          display: grid;
+          place-items: center;
+          border-radius: 50%;
+          background: #5a4de5;
+          color: white;
+          font-size: 8px;
+          font-weight: 800;
+        }
+
+        .field {
+          margin-bottom: 11px;
+        }
+
+        .field-label {
+          display: block;
+          margin: 0 0 4px;
+          color: #4e5d78;
+          font-size: 8px;
+          line-height: 1;
+          font-weight: 650;
+        }
+
+        .input-shell {
+          display: flex;
+          align-items: center;
+          min-height: 27px;
+          box-sizing: border-box;
+          padding: 0 8px;
+          border: 1px solid rgba(197, 207, 225, .85);
+          border-radius: 6px;
+          background: rgba(255, 255, 255, .65);
+          color: #96a2b4;
+          transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+        }
+
+        .input-shell:focus-within {
+          border-color: #6658e9;
+          background: rgba(255, 255, 255, .9);
+          box-shadow: 0 0 0 3px rgba(102, 88, 233, .12);
+        }
+
+        .input-shell input {
+          width: 100%;
+          min-width: 0;
+          padding: 6px 7px;
+          border: 0;
+          outline: 0;
+          background: transparent;
+          color: #182642;
+          font: inherit;
+          font-size: 9px;
+        }
+
+        .input-shell input::placeholder {
+          color: #a2adbd;
+        }
+
+        .password-toggle {
+          display: grid;
+          flex: 0 0 auto;
+          place-items: center;
+          padding: 0;
+          border: 0;
+          background: transparent;
+          color: #96a2b4;
+          cursor: pointer;
+        }
+
+        .password-strength {
+          margin-top: 6px;
+        }
+
+        .strength-bars {
+          display: flex;
+          gap: 3px;
+          margin-bottom: 5px;
+        }
+
+        .strength-bars span {
+          height: 3px;
+          flex: 1;
+          border-radius: 2px;
+          background: #e2e8f0;
+        }
+
+        .strength-bars span.strength-1 {
+          background: #ef4444;
+        }
+
+        .strength-bars span.strength-2 {
+          background: #f97316;
+        }
+
+        .strength-bars span.strength-3 {
+          background: #eab308;
+        }
+
+        .strength-bars span.strength-4 {
+          background: #22c55e;
+        }
+
+        .strength-checks {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 5px 9px;
+        }
+
+        .strength-checks span {
+          color: #94a3b8;
+          font-size: 7px;
+          font-weight: 550;
+        }
+
+        .strength-checks span.valid {
+          color: #22a66a;
+        }
+
+        .auth-error {
+          margin: 0 0 10px;
+          padding: 7px 8px;
+          border: 1px solid #fecaca;
+          border-radius: 6px;
+          background: #fff1f2;
+          color: #c2413e;
+          font-size: 9px;
+          line-height: 1.35;
+        }
+
+        .primary-button {
+          width: 100%;
+          min-height: 27px;
+          border: 0;
+          border-radius: 6px;
+          background: linear-gradient(100deg, #6554ee, #5551e9);
+          color: white;
+          font: inherit;
+          font-size: 9px;
+          font-weight: 700;
+          cursor: pointer;
+          box-shadow: 0 5px 12px rgba(91, 77, 231, .2);
+          transition: transform .18s ease, filter .18s ease;
+        }
+
+        .primary-button:hover:not(:disabled) {
+          filter: brightness(1.06);
+          transform: translateY(-1px);
+        }
+
+        .primary-button:disabled {
+          cursor: not-allowed;
+          opacity: .65;
+        }
+
+        .text-button {
+          margin-top: 13px;
+          padding: 0;
+          border: 0;
+          background: transparent;
+          color: #718098;
+          font: inherit;
+          font-size: 8px;
+          cursor: pointer;
+        }
+
+        .text-button:hover {
+          color: #5549dd;
+        }
+
+        .auth-footer {
+          margin: 13px 0 0;
+          color: #8793a8;
+          text-align: center;
+          font-size: 8px;
+        }
+
+        .auth-footer a {
+          color: #5549dd;
+          font-weight: 750;
+          text-decoration: none;
+        }
+
+        .auth-footer a:hover {
+          text-decoration: underline;
+        }
+
+        .setup-note {
+          margin: 0 0 13px;
+          padding: 10px;
+          border: 1px solid rgba(222, 229, 240, .95);
+          border-radius: 7px;
+          background: rgba(255, 255, 255, .45);
+          color: #596881;
+          font-size: 8px;
+          line-height: 1.45;
+        }
+
+        .invite-input {
+          text-align: center;
+          letter-spacing: .16em;
+          font-weight: 750;
+        }
+
+        @media (min-width: 560px) {
+          .register-card {
+            padding: 30px 28px 24px;
+          }
+
+          .register-title {
+            font-size: 20px;
+            margin-bottom: 20px;
+          }
+
+          .progress {
+            margin-bottom: 23px;
+          }
+
+          .progress-node {
+            width: 23px;
+            height: 23px;
+            flex-basis: 23px;
+            font-size: 10px;
+          }
+
+          .section-title {
+            font-size: 17px;
+          }
+
+          .section-description {
+            font-size: 10px;
+            margin-bottom: 16px;
+          }
+
+          .role-grid {
+            gap: 12px;
+          }
+
+          .role-card {
+            min-height: 108px;
+            padding: 14px;
+          }
+
+          .role-icon {
+            width: 28px;
+            height: 28px;
+            font-size: 17px;
+            margin-bottom: 7px;
+          }
+
+          .role-name {
+            font-size: 12px;
+          }
+
+          .role-description {
+            font-size: 9px;
+          }
+
+          .field-label {
+            font-size: 10px;
+          }
+
+          .input-shell {
+            min-height: 34px;
+            border-radius: 8px;
+          }
+
+          .input-shell input {
+            padding: 8px;
+            font-size: 11px;
+          }
+
+          .primary-button {
+            min-height: 34px;
+            border-radius: 8px;
+            font-size: 11px;
+          }
+
+          .text-button,
+          .auth-footer {
+            font-size: 10px;
+          }
+        }
+
+        @media (max-width: 360px) {
+          .role-card {
+            min-height: 90px;
+            padding: 8px;
+          }
+
+          .role-description {
+            font-size: 7px;
+          }
+        }
       `}</style>
 
-      {/* Glass Card */}
-      <div style={{
-        background: 'rgba(255, 255, 255, 0.85)',
-        backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255, 255, 255, 0.6)',
-        borderRadius: 24, padding: '40px 36px',
-        width: '100%', maxWidth: step === 2 ? 640 : 440,
-        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.08)',
-        boxSizing: 'border-box', transition: 'max-width 0.3s ease'
-      }}>
-        
-        <h1 style={{ color: '#0f172a', margin: '0 0 24px', fontSize: 24, fontWeight: 700 }}>Create your account</h1>
+      <section className="register-card" aria-labelledby="register-heading">
+        <h1 id="register-heading" className="register-title">
+          Create your account
+        </h1>
 
-        {/* Progress Bar matched perfectly to image */}
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 32 }}>
-          {/* Step 1 Node */}
-          <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: step > 1 ? '#22c55e' : (step === 1 ? '#6366f1' : 'white'), color: 'white', fontWeight: 600, fontSize: 13, border: step === 1 ? 'none' : (step > 1 ? 'none' : '1px solid #cbd5e1') }}>
-            {step > 1 ? '✓' : 1}
-          </div>
-          {/* Line 1 */}
-          <div style={{ flex: 1, height: 2, background: step > 1 ? '#22c55e' : '#e2e8f0', margin: '0 8px' }}></div>
-          
-          {/* Step 2 Node */}
-          <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: step > 2 ? '#22c55e' : (step === 2 ? '#6366f1' : 'white'), color: step >= 2 ? 'white' : '#64748b', fontWeight: 600, fontSize: 13, border: step === 2 ? 'none' : (step > 2 ? 'none' : '1px solid #cbd5e1') }}>
-            {step > 2 ? '✓' : 2}
-          </div>
-          {/* Line 2 */}
-          <div style={{ flex: 1, height: 2, background: step > 2 ? '#22c55e' : '#e2e8f0', margin: '0 8px' }}></div>
-          
-          {/* Step 3 Node */}
-          <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: step === 3 ? '#6366f1' : 'white', color: step === 3 ? 'white' : '#64748b', fontWeight: 600, fontSize: 13, border: step === 3 ? 'none' : '1px solid #cbd5e1' }}>
-            3
-          </div>
-        </div>
+        <Progress step={step} />
 
-        {/* STEP 1: Account Info */}
         {step === 1 && (
-          <form onSubmit={handleStep1}>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', color: '#334155', fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Full Name</label>
-              <div className="input-wrapper" style={{ border: '1px solid #e2e8f0', borderRadius: 10, background: 'white', display: 'flex' }}>
-                <input value={name} onChange={e => setName(e.target.value)} placeholder="John Smith" required style={{ width: '100%', padding: '12px', border: 'none', outline: 'none', background: 'transparent', fontSize: 14 }} />
-              </div>
-            </div>
-            
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', color: '#334155', fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Email address</label>
-              <div className="input-wrapper" style={{ border: '1px solid #e2e8f0', borderRadius: 10, background: 'white', display: 'flex' }}>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@company.com" required style={{ width: '100%', padding: '12px', border: 'none', outline: 'none', background: 'transparent', fontSize: 14 }} />
+          <form onSubmit={handleAccountStep} noValidate>
+            <div className="field">
+              <label className="field-label" htmlFor="register-name">
+                Full name
+              </label>
+
+              <div className="input-shell">
+                <input
+                  id="register-name"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder="John Smith"
+                  autoComplete="name"
+                  required
+                />
               </div>
             </div>
 
-            <div style={{ marginBottom: 24 }}>
-              <label style={{ display: 'block', color: '#334155', fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Password</label>
-              <div className="input-wrapper" style={{ border: '1px solid #e2e8f0', borderRadius: 10, background: 'white', display: 'flex', alignItems: 'center', paddingRight: 12 }}>
-                <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="Min 8 chars, uppercase, number" style={{ flex: 1, padding: '12px', border: 'none', outline: 'none', background: 'transparent', fontSize: 14 }} />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex' }}>
-                   {showPassword ? (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
-                  ) : (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                  )}
+            <div className="field">
+              <label className="field-label" htmlFor="register-email">
+                Email address
+              </label>
+
+              <div className="input-shell">
+                <input
+                  id="register-email"
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="you@company.com"
+                  autoComplete="email"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="field">
+              <label className="field-label" htmlFor="register-password">
+                Password
+              </label>
+
+              <div className="input-shell">
+                <input
+                  id="register-password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="Min 8 chars, uppercase, number"
+                  autoComplete="new-password"
+                  required
+                />
+
+                <button
+                  className="password-toggle"
+                  type="button"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  onClick={() => setShowPassword((visible) => !visible)}
+                >
+                  <EyeIcon crossed={showPassword} />
                 </button>
               </div>
+
               <PasswordStrength password={password} />
             </div>
 
-            {error && <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 12px', marginBottom: 16, color: '#ef4444', fontSize: 13 }}>{error}</div>}
+            {error && (
+              <div className="auth-error" role="alert">
+                {error}
+              </div>
+            )}
 
-            <button type="submit" className="btn-primary" style={{ width: '100%', padding: '12px', background: '#6366f1', color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
+            <button className="primary-button" type="submit">
               Continue
             </button>
 
-            <p style={{ textAlign: 'center', marginTop: 20, fontSize: 13, color: '#64748b' }}>
-              Already have an account? <Link to="/login" style={{ color: '#6366f1', fontWeight: 600, textDecoration: 'none' }}>Sign in</Link>
+            <p className="auth-footer">
+              Already have an account? <Link to="/login">Sign in</Link>
             </p>
           </form>
         )}
 
-        {/* STEP 2: Role Selection (Matched to screenshot) */}
         {step === 2 && (
           <div>
-            <h2 style={{ color: '#0f172a', margin: '0 0 4px', fontSize: 20, fontWeight: 700 }}>Choose your role</h2>
-            <p style={{ color: '#64748b', margin: '0 0 20px', fontSize: 14 }}>This sets your access level across the platform</p>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              {ROLES.map(r => {
-                const isSelected = role === r.value;
-                return (
-                  <div key={r.value} className={`role-card ${isSelected ? 'selected' : ''}`} onClick={() => handleRoleSelect(r.value)}>
-                    {isSelected && (
-                      <div style={{ position: 'absolute', top: 12, right: 12, width: 20, height: 20, background: '#6366f1', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                      </div>
-                    )}
-                    <div style={{ fontSize: 32, marginBottom: 12 }}>{r.icon}</div>
-                    <div style={{ color: '#0f172a', fontWeight: 700, fontSize: 15, marginBottom: 6 }}>{r.label}</div>
-                    <div style={{ color: '#64748b', fontSize: 13, lineHeight: 1.4 }}>{r.desc}</div>
-                  </div>
-                );
-              })}
+            <h2 className="section-title">
+              Choose your role
+            </h2>
+
+            <p className="section-description">
+              This sets your access level across the platform
+            </p>
+
+            <div className="role-grid">
+              {ROLES.map((item) => (
+                <button
+                  key={item.value}
+                  className={`role-card ${
+                    role === item.value ? 'selected' : ''
+                  }`}
+                  type="button"
+                  onClick={() => handleRoleSelect(item.value)}
+                >
+                  {role === item.value && (
+                    <span className="role-check">
+                      ✓
+                    </span>
+                  )}
+
+                  <span className={`role-icon ${item.tone}`}>
+                    {item.icon}
+                  </span>
+
+                  <span className="role-name">
+                    {item.label}
+                  </span>
+
+                  <span className="role-description">
+                    {item.description}
+                  </span>
+                </button>
+              ))}
             </div>
-            
-            <button onClick={() => setStep(1)} style={{ marginTop: 24, background: 'none', border: 'none', color: '#64748b', fontWeight: 500, cursor: 'pointer', fontSize: 14, padding: 0 }}>
+
+            <button
+              className="text-button"
+              type="button"
+              onClick={() => setStep(1)}
+            >
               ← Back
             </button>
           </div>
         )}
 
-        {/* STEP 3: Setup Info */}
         {step === 3 && (
           <div>
-            <h2 style={{ color: '#0f172a', margin: '0 0 4px', fontSize: 20, fontWeight: 700 }}>
-              {role === 'MANAGER' ? 'Set up your workspace' : role === 'CUSTOMER' ? 'Almost done!' : 'Join your team'}
+            <h2 className="section-title">
+              {role === 'MANAGER'
+                ? 'Set up your workspace'
+                : role === 'CUSTOMER'
+                  ? 'Almost done!'
+                  : 'Join your team'}
             </h2>
-            <p style={{ color: '#64748b', margin: '0 0 24px', fontSize: 14 }}>
-              {role === 'MANAGER' ? 'Name your organization to begin.' : role === 'CUSTOMER' ? 'Your account is ready.' : 'Enter your team invite code.'}
+
+            <p className="section-description">
+              {role === 'MANAGER'
+                ? 'Name your organization to begin.'
+                : role === 'CUSTOMER'
+                  ? 'Your account is ready.'
+                  : 'Enter your team invite code.'}
             </p>
 
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} noValidate>
               {role === 'MANAGER' && (
-                <div style={{ marginBottom: 24 }}>
-                  <label style={{ display: 'block', color: '#334155', fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Organization Name</label>
-                  <div className="input-wrapper" style={{ border: '1px solid #e2e8f0', borderRadius: 10, background: 'white', display: 'flex' }}>
-                    <input value={organizationName} onChange={e => setOrganizationName(e.target.value)} placeholder="e.g. Apex Facilities Management" required style={{ width: '100%', padding: '12px', border: 'none', outline: 'none', background: 'transparent', fontSize: 14 }} />
+                <div className="field">
+                  <label
+                    className="field-label"
+                    htmlFor="organization-name"
+                  >
+                    Organization name
+                  </label>
+
+                  <div className="input-shell">
+                    <input
+                      id="organization-name"
+                      value={organizationName}
+                      onChange={(event) =>
+                        setOrganizationName(event.target.value)
+                      }
+                      placeholder="e.g. Apex Facilities Management"
+                      autoComplete="organization"
+                      required
+                    />
                   </div>
                 </div>
               )}
 
               {(role === 'DISPATCHER' || role === 'TECHNICIAN') && (
-                <div style={{ marginBottom: 24 }}>
-                  <label style={{ display: 'block', color: '#334155', fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Team Invite Code</label>
-                  <div className="input-wrapper" style={{ border: '1px solid #e2e8f0', borderRadius: 10, background: 'white', display: 'flex' }}>
-                    <input value={inviteCode} onChange={e => setInviteCode(e.target.value.toUpperCase())} placeholder="KST-XXXX" required style={{ width: '100%', padding: '12px', border: 'none', outline: 'none', background: 'transparent', fontSize: 16, fontWeight: 600, letterSpacing: 2, textAlign: 'center' }} />
-                  </div>
-                  <p style={{ color: '#94a3b8', fontSize: 12, marginTop: 8, textAlign: 'center' }}>Get this code from your manager.</p>
-                </div>
-              )}
+                <div className="field">
+                  <label className="field-label" htmlFor="invite-code">
+                    Team invite code
+                  </label>
 
-              {role === 'CUSTOMER' && (
-                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: 16, marginBottom: 24 }}>
-                  <p style={{ color: '#475569', fontSize: 13, margin: 0, lineHeight: 1.5 }}>
-                    Your customer account will be created. A service manager will link you to the appropriate workspace when they set up your first job.
+                  <div className="input-shell">
+                    <input
+                      id="invite-code"
+                      className="invite-input"
+                      value={inviteCode}
+                      onChange={(event) =>
+                        setInviteCode(event.target.value.toUpperCase())
+                      }
+                      placeholder="KST-XXXX"
+                      required
+                    />
+                  </div>
+
+                  <p className="section-description">
+                    Get this code from your manager.
                   </p>
                 </div>
               )}
 
-              {error && <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 12px', marginBottom: 16, color: '#ef4444', fontSize: 13 }}>{error}</div>}
+              {role === 'CUSTOMER' && (
+                <p className="setup-note">
+                  Your customer account will be created. A service manager will
+                  link you to the appropriate workspace when they set up your
+                  first job.
+                </p>
+              )}
 
-              <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', padding: '12px', background: '#6366f1', color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, transition: 'all 0.2s' }}>
-                {loading ? 'Creating account...' : 'Create account'}
+              {error && (
+                <div className="auth-error" role="alert">
+                  {error}
+                </div>
+              )}
+
+              <button
+                className="primary-button"
+                type="submit"
+                disabled={loading}
+              >
+                {loading ? 'Creating account…' : 'Create account'}
               </button>
             </form>
-            
-            <button onClick={() => setStep(2)} style={{ marginTop: 24, background: 'none', border: 'none', color: '#64748b', fontWeight: 500, cursor: 'pointer', fontSize: 14, padding: 0 }}>
+
+            <button
+              className="text-button"
+              type="button"
+              onClick={() => setStep(2)}
+            >
               ← Change role
             </button>
           </div>
         )}
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }
