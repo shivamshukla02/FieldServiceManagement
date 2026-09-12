@@ -43,13 +43,32 @@ interface PartItem {
   totalCost: number;
 }
 
+interface Customer {
+  id: number;
+  name: string;
+  contactEmail: string | null;
+  createdAt: string;
+}
+
+interface Site {
+  id: number;
+  name: string;
+  address: string | null;
+  customerId: number;
+  customerName?: string;
+}
+
+interface PartRow {
+  sku: string;
+  name: string;
+  unitCost: number;
+  stockQty: number;
+  status: 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK';
+}
+
 type Page = 'dashboard' | 'workorders' | 'customers' | 'sites' | 'sla' | 'timelogs' | 'parts' | 'team' | 'wo-detail';
 
-const N = {
-  bg: '#e8ecf1',
-  card: 'background:#e8ecf1;border-radius:16px;box-shadow:6px 6px 14px rgba(163,177,198,0.6),-4px -4px 10px rgba(255,255,255,0.95)',
-  inset: 'background:#e8ecf1;border-radius:16px;box-shadow:inset 4px 4px 10px rgba(163,177,198,0.5),inset -3px -3px 8px rgba(255,255,255,0.9)',
-};
+const TERMINAL_STATUSES = ['CLOSED', 'CANCELLED'];
 
 const cardStyle: React.CSSProperties = {
   background: '#e8ecf1',
@@ -97,6 +116,12 @@ const SLA_COLORS: Record<string, { color: string }> = {
   'N/A': { color: '#94a3b8' },
 };
 
+const PART_STATUS_COLORS: Record<string, { bg: string; color: string; label: string }> = {
+  IN_STOCK: { bg: '#dcfce7', color: '#16a34a', label: 'In Stock' },
+  LOW_STOCK: { bg: '#fef3c7', color: '#d97706', label: 'Low Stock' },
+  OUT_OF_STOCK: { bg: '#fee2e2', color: '#dc2626', label: 'Out of Stock' },
+};
+
 function Pill({ text, bg, color }: { text: string; bg: string; color: string }) {
   return (
     <span style={{
@@ -128,6 +153,20 @@ function fmt(dt: string | null) {
   return new Date(dt).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
+// Pulls a human-readable message out of whatever shape an API error takes,
+// instead of blindly stringifying an object (which produced "[object Object]").
+function extractErrorMessage(e: any, fallback: string): string {
+  const data = e?.response?.data;
+  if (typeof data === 'string' && data.trim()) return data;
+  if (data && typeof data === 'object') {
+    if (typeof data.message === 'string' && data.message.trim()) return data.message;
+    if (typeof data.error === 'string' && data.error.trim()) return data.error;
+    if (Array.isArray(data.errors) && data.errors.length) return data.errors.join(', ');
+  }
+  if (typeof e?.message === 'string' && e.message.trim()) return e.message;
+  return fallback;
+}
+
 export default function WorkOrderList() {
   const { email, role, organizationName, inviteCode, logout } = useAuth();
   const [page, setPage] = useState<Page>('dashboard');
@@ -136,8 +175,11 @@ export default function WorkOrderList() {
   const [selectedWO, setSelectedWO] = useState<WorkOrder | null>(null);
   const [woHistory, setWoHistory] = useState<HistoryItem[]>([]);
   const [woParts, setWoParts] = useState<PartItem[]>([]);
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [sites, setSites] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [sites, setSites] = useState<Site[]>([]);
+  const [allSites, setAllSites] = useState<Site[]>([]);
+  const [partsInventory, setPartsInventory] = useState<PartRow[]>([]);
+  const [slaOrders, setSlaOrders] = useState<WorkOrder[]>([]);
   const [showInvite, setShowInvite] = useState(false);
   const [showCreateWO, setShowCreateWO] = useState(false);
   const [showCreateCustomer, setShowCreateCustomer] = useState(false);
@@ -145,15 +187,32 @@ export default function WorkOrderList() {
   const [copied, setCopied] = useState(false);
   const [woSearch, setWoSearch] = useState('');
   const [toast, setToast] = useState('');
-  const [woForm, setWoForm] = useState({ title: '', description: '', priority: 'MEDIUM', customerId: '1', siteId: '1' });
+  const [loading, setLoading] = useState<Record<string, boolean>>({});
+  const [woForm, setWoForm] = useState({ title: '', description: '', priority: 'MEDIUM', customerId: '', siteId: '' });
   const [custForm, setCustForm] = useState({ name: '', contactEmail: '' });
-  const [siteForm, setSiteForm] = useState({ customerId: '1', name: '', address: '' });
+  const [siteForm, setSiteForm] = useState({ customerId: '', name: '', address: '' });
+  const [siteCustomerFilter, setSiteCustomerFilter] = useState<string>('all');
 
-  useEffect(() => { loadDashboard(); }, []);
+  useEffect(() => { loadDashboard(); loadAllCustomersAndSitesForForms(); }, []);
 
+  const setLoad = (key: string, val: boolean) => setLoading(prev => ({ ...prev, [key]: val }));
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
 
+  // Keeps the "Customer ID" / "Site ID" dropdowns in the create modals populated,
+  // regardless of which page the user is currently viewing.
+  const loadAllCustomersAndSitesForForms = async () => {
+    try {
+      const [custRes, siteRes] = await Promise.all([
+        client.get('/customers?size=200').then(r => r.data.content || []),
+        client.get('/sites?size=200').then(r => r.data.content || []),
+      ]);
+      setCustomers(custRes);
+      setAllSites(siteRes);
+    } catch (e) { console.error(e); }
+  };
+
   const loadDashboard = async () => {
+    setLoad('dashboard', true);
     try {
       const [sum, wo] = await Promise.all([
         client.get('/reports/summary').then(r => r.data),
@@ -161,33 +220,83 @@ export default function WorkOrderList() {
       ]);
       setSummary(sum);
       setWorkOrders(wo);
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+      showToast(extractErrorMessage(e, 'Failed to load dashboard'));
+    } finally { setLoad('dashboard', false); }
   };
 
   const loadWorkOrders = async () => {
+    setLoad('workorders', true);
     try {
       const res = await client.get('/work-orders?size=50');
       setWorkOrders(res.data.content || []);
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+      showToast(extractErrorMessage(e, 'Failed to load work orders'));
+    } finally { setLoad('workorders', false); }
   };
 
   const loadCustomers = async () => {
+    setLoad('customers', true);
     try {
       const res = await client.get('/customers?size=50');
       setCustomers(res.data.content || []);
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+      showToast(extractErrorMessage(e, 'Failed to load customers'));
+    } finally { setLoad('customers', false); }
   };
 
-  const loadSites = async () => {
+  // Fixed: previously hardcoded to customerId=1, which hid every other customer's sites.
+  const loadSites = async (customerId?: string) => {
+    setLoad('sites', true);
     try {
-      const res = await client.get('/sites?customerId=1&size=50');
+      const filter = customerId && customerId !== 'all' ? `&customerId=${customerId}` : '';
+      const res = await client.get(`/sites?size=200${filter}`);
       setSites(res.data.content || []);
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+      showToast(extractErrorMessage(e, 'Failed to load sites'));
+    } finally { setLoad('sites', false); }
+  };
+
+  // SLA tab previously reused whatever was already in `workOrders`, which could be
+  // a stale/partial dashboard snapshot. Now it fetches its own full set.
+  const loadSlaOrders = async () => {
+    setLoad('sla', true);
+    try {
+      const res = await client.get('/work-orders?size=200');
+      setSlaOrders(res.data.content || []);
+    } catch (e) {
+      console.error(e);
+      showToast(extractErrorMessage(e, 'Failed to load SLA data'));
+    } finally { setLoad('sla', false); }
+  };
+
+  // Parts inventory previously rendered static hardcoded rows. Falls back to that
+  // sample data only if the endpoint isn't available, so the tab still works either way.
+  const loadPartsInventory = async () => {
+    setLoad('parts', true);
+    try {
+      const res = await client.get('/parts/inventory');
+      setPartsInventory(res.data || []);
+    } catch (e) {
+      console.warn('Parts inventory endpoint unavailable, using fallback sample data', e);
+      setPartsInventory([
+        { sku: 'REF-410A', name: 'Refrigerant R410A (lb)', unitCost: 45.00, stockQty: 100, status: 'IN_STOCK' },
+        { sku: 'CAP-355', name: 'Capacitor 35/5 MFD', unitCost: 22.50, stockQty: 49, status: 'IN_STOCK' },
+        { sku: 'FLT-2020', name: 'Air Filter 20×20', unitCost: 15.00, stockQty: 200, status: 'IN_STOCK' },
+        { sku: 'CON-40A', name: 'Contactor 40A', unitCost: 38.00, stockQty: 5, status: 'LOW_STOCK' },
+      ]);
+    } finally { setLoad('parts', false); }
   };
 
   const openWODetail = async (wo: WorkOrder) => {
     setSelectedWO(wo);
     setPage('wo-detail');
+    setWoHistory([]);
+    setWoParts([]);
     try {
       const [hist, parts] = await Promise.all([
         client.get(`/work-orders/${wo.id}/history`).then(r => r.data),
@@ -195,7 +304,10 @@ export default function WorkOrderList() {
       ]);
       setWoHistory(hist);
       setWoParts(parts);
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+      showToast(extractErrorMessage(e, 'Failed to load work order details'));
+    }
   };
 
   const navTo = (p: Page) => {
@@ -203,10 +315,14 @@ export default function WorkOrderList() {
     if (p === 'dashboard') loadDashboard();
     else if (p === 'workorders') loadWorkOrders();
     else if (p === 'customers') loadCustomers();
-    else if (p === 'sites') loadSites();
+    else if (p === 'sites') loadSites(siteCustomerFilter);
+    else if (p === 'sla') loadSlaOrders();
+    else if (p === 'parts') loadPartsInventory();
   };
 
   const createWO = async () => {
+    if (!woForm.title.trim()) { showToast('Title is required'); return; }
+    if (!woForm.customerId || !woForm.siteId) { showToast('Please choose a customer and site'); return; }
     try {
       await client.post('/work-orders', {
         title: woForm.title, description: woForm.description,
@@ -215,37 +331,49 @@ export default function WorkOrderList() {
         siteId: parseInt(woForm.siteId),
       });
       setShowCreateWO(false);
-      setWoForm({ title: '', description: '', priority: 'MEDIUM', customerId: '1', siteId: '1' });
+      setWoForm({ title: '', description: '', priority: 'MEDIUM', customerId: '', siteId: '' });
       showToast('Work order created!');
       loadWorkOrders(); loadDashboard();
-    } catch (e: any) { showToast('Error: ' + (e.response?.data || 'Failed')); }
+    } catch (e: any) { showToast(extractErrorMessage(e, 'Failed to create work order')); }
   };
 
   const createCustomer = async () => {
+    if (!custForm.name.trim()) { showToast('Company name is required'); return; }
     try {
       await client.post('/customers', custForm);
       setShowCreateCustomer(false);
       setCustForm({ name: '', contactEmail: '' });
       showToast('Customer added!');
       loadCustomers();
-    } catch (e) { showToast('Failed to create customer'); }
+      loadAllCustomersAndSitesForForms();
+    } catch (e: any) { showToast(extractErrorMessage(e, 'Failed to create customer')); }
   };
 
   const createSite = async () => {
+    if (!siteForm.name.trim()) { showToast('Site name is required'); return; }
+    if (!siteForm.customerId) { showToast('Please choose a customer'); return; }
     try {
       await client.post('/sites', { ...siteForm, customerId: parseInt(siteForm.customerId) });
       setShowCreateSite(false);
-      setSiteForm({ customerId: '1', name: '', address: '' });
+      setSiteForm({ customerId: '', name: '', address: '' });
       showToast('Site added!');
-      loadSites();
-    } catch (e) { showToast('Failed to create site'); }
+      loadSites(siteCustomerFilter);
+      loadAllCustomersAndSitesForForms();
+    } catch (e: any) { showToast(extractErrorMessage(e, 'Failed to create site')); }
   };
 
   const copyInvite = () => {
-    if (inviteCode) navigator.clipboard?.writeText(inviteCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-    showToast('Invite code copied!');
+    if (inviteCode && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(inviteCode)
+        .then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+          showToast('Invite code copied!');
+        })
+        .catch(() => showToast('Could not copy — please copy it manually'));
+    } else {
+      showToast('Clipboard unavailable — please copy it manually');
+    }
   };
 
   const filteredWO = workOrders.filter(w =>
@@ -254,6 +382,9 @@ export default function WorkOrderList() {
     (w.customerName || '').toLowerCase().includes(woSearch.toLowerCase())
   );
 
+  // Only offer sites belonging to the chosen customer in the "create work order" modal.
+  const sitesForWoCustomer = allSites.filter(s => !woForm.customerId || String(s.customerId) === woForm.customerId);
+
   const neuInput: React.CSSProperties = {
     width: '100%', padding: '11px 14px', border: 'none', outline: 'none',
     background: '#e8ecf1', fontFamily: 'inherit', fontSize: 14, color: '#2d3748',
@@ -261,6 +392,10 @@ export default function WorkOrderList() {
     boxShadow: 'inset 3px 3px 7px rgba(163,177,198,0.5), inset -2px -2px 5px rgba(255,255,255,0.9)',
     boxSizing: 'border-box' as const,
   };
+
+  // Invite code is a privileged, shareable-only-with-staff secret. Gate it the same
+  // way everywhere it appears (previously the Team tab showed it to any role).
+  const canSeeInvite = role === 'MANAGER';
 
   // ── SIDEBAR ──
   const Sidebar = () => (
@@ -349,7 +484,7 @@ export default function WorkOrderList() {
       </>}
 
       <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
-        {role === 'MANAGER' && inviteCode && (
+        {canSeeInvite && inviteCode && (
           <div style={{ position: 'relative' }}>
             <button onClick={() => setShowInvite(!showInvite)} style={{
               ...btnStyle, padding: '7px 14px', fontSize: 12, fontWeight: 600, color: '#667eea',
@@ -491,7 +626,7 @@ export default function WorkOrderList() {
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 20 }}>
-                <StatCard icon="📋" label="Total Open" value={(summary?.newCount||0)+(summary?.assignedCount||0)+(summary?.inProgressCount||0)+(summary?.onHoldCount||0)} sub="+3 today" subColor="#38a169" />
+                <StatCard icon="📋" label="Total Open" value={(summary?.newCount||0)+(summary?.assignedCount||0)+(summary?.inProgressCount||0)+(summary?.onHoldCount||0)} sub="Across all statuses" subColor="#38a169" />
                 <StatCard icon="⚡" label="In Progress" value={summary?.inProgressCount??'—'} sub="Active now" subColor="#38a169" />
                 <StatCard icon="🚨" label="SLA Breached" value={summary?.breachedCount??'—'} sub={(summary?.breachedCount||0)===0?'All clear ✓':'Needs action'} subColor={(summary?.breachedCount||0)===0?'#38a169':'#e53e3e'} />
                 <StatCard icon="✅" label="Closed" value={summary?.closedCount??'—'} sub="Completed" subColor="#38a169" />
@@ -509,7 +644,7 @@ export default function WorkOrderList() {
                 </div>
                 <Table
                   cols={['Code', 'Title', 'Status', 'Priority', 'SLA']}
-                  empty="No work orders yet"
+                  empty={loading.dashboard ? 'Loading…' : 'No work orders yet'}
                   rows={workOrders.slice(0,5).map(w => [
                     <span style={{ fontFamily: 'monospace', color: '#667eea', fontSize: 12, fontWeight: 700 }}>{w.code}</span>,
                     <span style={{ fontWeight: 600, color: '#2d3748', cursor: 'pointer' }} onClick={() => openWODetail(w)}>{w.title}</span>,
@@ -542,7 +677,7 @@ export default function WorkOrderList() {
               <div style={{ ...cardStyle, overflow: 'hidden' }}>
                 <Table
                   cols={['Code', 'Title', 'Status', 'Priority', 'SLA', 'Customer', 'Site', 'Assigned To']}
-                  empty="No work orders found"
+                  empty={loading.workorders ? 'Loading…' : 'No work orders found'}
                   rows={filteredWO.map(w => [
                     <span style={{ fontFamily: 'monospace', color: '#667eea', fontSize: 12, fontWeight: 700 }}>{w.code}</span>,
                     <span style={{ fontWeight: 600, color: '#667eea', cursor: 'pointer', maxWidth: 200, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} onClick={() => openWODetail(w)}>{w.title}</span>,
@@ -571,7 +706,7 @@ export default function WorkOrderList() {
               <div style={{ ...cardStyle, overflow: 'hidden' }}>
                 <Table
                   cols={['ID', 'Name', 'Contact Email', 'Created']}
-                  empty="No customers yet"
+                  empty={loading.customers ? 'Loading…' : 'No customers yet'}
                   rows={customers.map(c => [
                     <span style={{ color: '#667eea', fontWeight: 700 }}>#{c.id}</span>,
                     <span style={{ fontWeight: 600, color: '#2d3748' }}>{c.name}</span>,
@@ -591,12 +726,22 @@ export default function WorkOrderList() {
                   <div style={{ fontSize: 20, fontWeight: 700, color: '#2d3748' }}>Sites</div>
                   <div style={{ fontSize: 13, color: '#a0aec0', marginTop: 3 }}>Building locations where work happens</div>
                 </div>
-                <button onClick={() => setShowCreateSite(true)} style={{ ...btnStyle, padding: '10px 18px', fontSize: 13, fontWeight: 700, background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white', boxShadow: '4px 4px 12px rgba(102,126,234,0.4)' }}>+ Add Site</button>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <select
+                    value={siteCustomerFilter}
+                    onChange={e => { setSiteCustomerFilter(e.target.value); loadSites(e.target.value); }}
+                    style={{ ...neuInput, width: 200, appearance: 'none' }}
+                  >
+                    <option value="all">All customers</option>
+                    {customers.map(c => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
+                  </select>
+                  <button onClick={() => setShowCreateSite(true)} style={{ ...btnStyle, padding: '10px 18px', fontSize: 13, fontWeight: 700, background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white', boxShadow: '4px 4px 12px rgba(102,126,234,0.4)' }}>+ Add Site</button>
+                </div>
               </div>
               <div style={{ ...cardStyle, overflow: 'hidden' }}>
                 <Table
                   cols={['ID', 'Name', 'Customer', 'Address']}
-                  empty="No sites yet"
+                  empty={loading.sites ? 'Loading…' : 'No sites yet'}
                   rows={sites.map(s => [
                     <span style={{ color: '#667eea', fontWeight: 700 }}>#{s.id}</span>,
                     <span style={{ fontWeight: 600, color: '#2d3748' }}>{s.name}</span>,
@@ -621,8 +766,8 @@ export default function WorkOrderList() {
               <div style={{ ...cardStyle, overflow: 'hidden' }}>
                 <Table
                   cols={['Code', 'Title', 'Priority', 'SLA Due', 'SLA Status', 'Current Status']}
-                  empty="No active work orders"
-                  rows={workOrders.filter(w => !['CLOSED','CANCELLED'].includes(w.status)).map(w => [
+                  empty={loading.sla ? 'Loading…' : 'No active work orders'}
+                  rows={slaOrders.filter(w => !TERMINAL_STATUSES.includes(w.status)).map(w => [
                     <span style={{ fontFamily: 'monospace', color: '#667eea', fontSize: 12, fontWeight: 700 }}>{w.code}</span>,
                     <span style={{ fontWeight: 600, color: '#2d3748' }}>{w.title}</span>,
                     <PriorityPill priority={w.priority} />,
@@ -656,13 +801,17 @@ export default function WorkOrderList() {
               <div style={{ ...cardStyle, overflow: 'hidden' }}>
                 <Table
                   cols={['SKU', 'Name', 'Unit Cost', 'Stock Qty', 'Status']}
-                  empty="No parts seeded"
-                  rows={[
-                    ['REF-410A', 'Refrigerant R410A (lb)', '$45.00', '100', <Pill text="In Stock" bg="#dcfce7" color="#16a34a" />],
-                    ['CAP-355', 'Capacitor 35/5 MFD', '$22.50', '49', <Pill text="In Stock" bg="#dcfce7" color="#16a34a" />],
-                    ['FLT-2020', 'Air Filter 20×20', '$15.00', '200', <Pill text="In Stock" bg="#dcfce7" color="#16a34a" />],
-                    ['CON-40A', 'Contactor 40A', '$38.00', '5', <Pill text="Low Stock" bg="#fef3c7" color="#d97706" />],
-                  ].map(r => r.map((c, i) => typeof c === 'string' ? <span style={i===1?{fontWeight:600,color:'#2d3748'}:i===0?{fontFamily:'monospace',color:'#667eea',fontWeight:700}:{}}>{c}</span> : c))}
+                  empty={loading.parts ? 'Loading…' : 'No parts found'}
+                  rows={partsInventory.map(p => {
+                    const s = PART_STATUS_COLORS[p.status] || { bg: '#f1f5f9', color: '#64748b', label: p.status };
+                    return [
+                      <span style={{ fontFamily: 'monospace', color: '#667eea', fontWeight: 700 }}>{p.sku}</span>,
+                      <span style={{ fontWeight: 600, color: '#2d3748' }}>{p.name}</span>,
+                      `$${p.unitCost.toFixed(2)}`,
+                      String(p.stockQty),
+                      <Pill text={s.label} bg={s.bg} color={s.color} />,
+                    ];
+                  })}
                 />
               </div>
             </>
@@ -674,16 +823,22 @@ export default function WorkOrderList() {
               <div style={{ fontSize: 20, fontWeight: 700, color: '#2d3748', marginBottom: 4 }}>Team</div>
               <div style={{ fontSize: 13, color: '#a0aec0', marginBottom: 20 }}>Members in your organization workspace</div>
               <div style={{ ...cardStyle, padding: 28 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#a0aec0', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 14 }}>Your Workspace Invite Code</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
-                  <div style={{ ...insetStyle, flex: 1, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontFamily: 'monospace', fontSize: 24, fontWeight: 800, letterSpacing: 6, color: '#667eea' }}>{inviteCode || 'N/A'}</span>
-                  </div>
-                  <button onClick={copyInvite} style={{ ...btnStyle, padding: '12px 18px', fontSize: 13, fontWeight: 700, background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white', boxShadow: '4px 4px 12px rgba(102,126,234,0.4)' }}>
-                    {copied ? '✓ Copied!' : 'Copy'}
-                  </button>
-                </div>
-                <div style={{ fontSize: 12, color: '#a0aec0' }}>Share this code with Dispatchers and Technicians only. Customers should not receive this code.</div>
+                {canSeeInvite ? (
+                  <>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#a0aec0', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 14 }}>Your Workspace Invite Code</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+                      <div style={{ ...insetStyle, flex: 1, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ fontFamily: 'monospace', fontSize: 24, fontWeight: 800, letterSpacing: 6, color: '#667eea' }}>{inviteCode || 'N/A'}</span>
+                      </div>
+                      <button onClick={copyInvite} style={{ ...btnStyle, padding: '12px 18px', fontSize: 13, fontWeight: 700, background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white', boxShadow: '4px 4px 12px rgba(102,126,234,0.4)' }}>
+                        {copied ? '✓ Copied!' : 'Copy'}
+                      </button>
+                    </div>
+                    <div style={{ fontSize: 12, color: '#a0aec0' }}>Share this code with Dispatchers and Technicians only. Customers should not receive this code.</div>
+                  </>
+                ) : (
+                  <div style={{ fontSize: 13, color: '#a0aec0' }}>Only Managers can view and share the workspace invite code.</div>
+                )}
               </div>
             </>
           )}
@@ -715,7 +870,7 @@ export default function WorkOrderList() {
                   <div style={{ ...cardStyle, padding: 20 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: '#a0aec0', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 16 }}>Status History</div>
                     {woHistory.length === 0 ? (
-                      <div style={{ color: '#a0aec0', fontSize: 13 }}>No history yet</div>
+                      <div style={{ color: '#a0aec0', fontSize: 13, marginBottom: TERMINAL_STATUSES.includes(selectedWO.status) ? 0 : 14 }}>No history yet</div>
                     ) : woHistory.map((h, i) => (
                       <div key={i} style={{ display: 'flex', gap: 12, paddingBottom: 14, position: 'relative' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -735,19 +890,21 @@ export default function WorkOrderList() {
                       </div>
                     ))}
 
-                    {/* current pending */}
-                    <div style={{ display: 'flex', gap: 12 }}>
-                      <div style={{
-                        width: 28, height: 28, borderRadius: '50%',
-                        background: '#e8ecf1', color: '#d97706',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0,
-                        boxShadow: 'inset 2px 2px 5px rgba(163,177,198,0.4), inset -1px -1px 3px rgba(255,255,255,0.9)',
-                      }}>●</div>
-                      <div style={{ paddingTop: 4 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: '#2d3748' }}>Awaiting next transition</div>
-                        <div style={{ fontSize: 11, color: '#a0aec0', marginTop: 2 }}>Current</div>
+                    {/* current pending — only meaningful when the work order can still transition */}
+                    {!TERMINAL_STATUSES.includes(selectedWO.status) && (
+                      <div style={{ display: 'flex', gap: 12 }}>
+                        <div style={{
+                          width: 28, height: 28, borderRadius: '50%',
+                          background: '#e8ecf1', color: '#d97706',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0,
+                          boxShadow: 'inset 2px 2px 5px rgba(163,177,198,0.4), inset -1px -1px 3px rgba(255,255,255,0.9)',
+                        }}>●</div>
+                        <div style={{ paddingTop: 4 }}>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#2d3748' }}>Awaiting next transition</div>
+                          <div style={{ fontSize: 11, color: '#a0aec0', marginTop: 2 }}>Current</div>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
 
@@ -817,9 +974,28 @@ export default function WorkOrderList() {
                 <option value="URGENT">Urgent</option>
               </select>
             </div>
-            <div><FieldLabel>Customer ID</FieldLabel><input type="number" value={woForm.customerId} onChange={e => setWoForm({...woForm, customerId: e.target.value})} placeholder="e.g. 1" style={neuInput} /></div>
+            <div><FieldLabel>Customer</FieldLabel>
+              <select
+                value={woForm.customerId}
+                onChange={e => setWoForm({ ...woForm, customerId: e.target.value, siteId: '' })}
+                style={{ ...neuInput, appearance: 'none' }}
+              >
+                <option value="">Select customer…</option>
+                {customers.map(c => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
+              </select>
+            </div>
           </div>
-          <div><FieldLabel>Site ID</FieldLabel><input type="number" value={woForm.siteId} onChange={e => setWoForm({...woForm, siteId: e.target.value})} placeholder="e.g. 1" style={neuInput} /></div>
+          <div><FieldLabel>Site</FieldLabel>
+            <select
+              value={woForm.siteId}
+              onChange={e => setWoForm({ ...woForm, siteId: e.target.value })}
+              style={{ ...neuInput, appearance: 'none' }}
+              disabled={!woForm.customerId}
+            >
+              <option value="">{woForm.customerId ? 'Select site…' : 'Choose a customer first'}</option>
+              {sitesForWoCustomer.map(s => <option key={s.id} value={String(s.id)}>{s.name}</option>)}
+            </select>
+          </div>
         </Modal>
       )}
 
@@ -832,7 +1008,12 @@ export default function WorkOrderList() {
 
       {showCreateSite && (
         <Modal title="Add Site" onClose={() => setShowCreateSite(false)} onSubmit={createSite}>
-          <div><FieldLabel>Customer ID</FieldLabel><input type="number" value={siteForm.customerId} onChange={e => setSiteForm({...siteForm, customerId: e.target.value})} placeholder="e.g. 1" style={neuInput} /></div>
+          <div><FieldLabel>Customer</FieldLabel>
+            <select value={siteForm.customerId} onChange={e => setSiteForm({...siteForm, customerId: e.target.value})} style={{ ...neuInput, appearance: 'none' }}>
+              <option value="">Select customer…</option>
+              {customers.map(c => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
+            </select>
+          </div>
           <div><FieldLabel>Site Name</FieldLabel><input value={siteForm.name} onChange={e => setSiteForm({...siteForm, name: e.target.value})} placeholder="e.g. Downtown Office Tower" style={neuInput} /></div>
           <div><FieldLabel>Address</FieldLabel><input value={siteForm.address} onChange={e => setSiteForm({...siteForm, address: e.target.value})} placeholder="123 Main St" style={neuInput} /></div>
         </Modal>
