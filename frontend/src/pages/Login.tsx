@@ -47,14 +47,14 @@ export default function Login() {
         position: 'absolute', inset: 0,
         backgroundImage: `url(${BG})`,
         backgroundSize: 'cover', backgroundPosition: 'center',
-        filter: 'blur(2px) brightness(0.75)',
+        filter: 'blur(1px) brightness(0.9)',
         transform: 'scale(1.05)',
         zIndex: 0,
       }} />
       {/* subtle tint overlay */}
       <div style={{
         position: 'absolute', inset: 0,
-        background: 'linear-gradient(135deg, rgba(15,12,41,0.3) 0%, rgba(48,43,99,0.25) 50%, rgba(36,36,62,0.3) 100%)',
+        background: 'linear-gradient(135deg, rgba(15,12,41,0.12) 0%, rgba(48,43,99,0.1) 50%, rgba(36,36,62,0.12) 100%)',
         zIndex: 1,
       }} />
 
