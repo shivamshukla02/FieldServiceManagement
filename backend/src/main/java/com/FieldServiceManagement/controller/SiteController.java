@@ -27,11 +27,18 @@ public class SiteController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<SiteResponse>> listByCustomer(
-            @RequestParam Long customerId,
-            Pageable pageable) {
+@PreAuthorize("hasAnyRole('DISPATCHER', 'MANAGER', 'TECHNICIAN', 'CUSTOMER')")
+public ResponseEntity<?> listByCustomer(
+        @RequestParam(required = false) Long customerId,
+        Pageable pageable) {
+    if (customerId != null) {
         return ResponseEntity.ok(siteService.listByCustomer(customerId, pageable));
     }
+    return ResponseEntity.ok(siteService.listAll(pageable));
+}
+public Page<SiteResponse> listAll(Pageable pageable) {
+    return siteRepository.findAll(pageable).map(this::toResponse);
+}
 
     @GetMapping("/{id}")
     public ResponseEntity<SiteResponse> getById(@PathVariable Long id) {

@@ -55,4 +55,9 @@ public class SiteService {
                 s.getCreatedAt()
         );
     }
+
+    public Page<SiteResponse> listAll(Pageable pageable) {
+    return siteRepository.findAll(pageable).map(this::toResponse);
+}
+
 }

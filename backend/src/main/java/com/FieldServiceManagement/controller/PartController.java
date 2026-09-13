@@ -1,8 +1,9 @@
 package com.FieldServiceManagement.controller;
-import org.springframework.security.access.prepost.PreAuthorize;
+
 import com.FieldServiceManagement.domain.Part;
 import com.FieldServiceManagement.repository.PartRepository;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,10 +23,16 @@ public class PartController {
         return ResponseEntity.ok(partRepository.findAll());
     }
 
+    @PostMapping
+    @PreAuthorize("hasAnyRole('MANAGER', 'DISPATCHER')")
+    public ResponseEntity<Part> create(@RequestBody Part part) {
+        return ResponseEntity.ok(partRepository.save(part));
+    }
+
     @DeleteMapping("/{id}")
-@PreAuthorize("hasAnyRole('MANAGER', 'DISPATCHER')")
-public ResponseEntity<Void> delete(@PathVariable Long id) {
-    partRepository.deleteById(id);
-    return ResponseEntity.noContent().build();
-}
+    @PreAuthorize("hasAnyRole('MANAGER', 'DISPATCHER')")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        partRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
 }

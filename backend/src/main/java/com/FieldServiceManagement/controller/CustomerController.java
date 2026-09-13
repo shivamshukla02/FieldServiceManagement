@@ -27,6 +27,7 @@ public class CustomerController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('DISPATCHER', 'MANAGER', 'TECHNICIAN', 'CUSTOMER')")
     public ResponseEntity<Page<CustomerResponse>> search(
             @RequestParam(required = false) String name,
             Pageable pageable) {
