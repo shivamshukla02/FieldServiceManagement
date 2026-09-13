@@ -17,7 +17,7 @@ public class ReportController {
     }
 
     @GetMapping("/summary")
-    @PreAuthorize("hasAnyRole('MANAGER', 'DISPATCHER')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'DISPATCHER', 'CUSTOMER', 'TECHNICIAN')")
     public ResponseEntity<DashboardSummary> summary() {
         return ResponseEntity.ok(workOrderService.getDashboardSummary());
     }

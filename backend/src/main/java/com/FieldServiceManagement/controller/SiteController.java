@@ -21,7 +21,7 @@ public class SiteController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('DISPATCHER', 'MANAGER')")
+@PreAuthorize("hasAnyRole('DISPATCHER', 'MANAGER', 'CUSTOMER', 'TECHNICIAN')")
     public ResponseEntity<SiteResponse> create(@Valid @RequestBody SiteRequest request) {
         return ResponseEntity.ok(siteService.create(request));
     }
