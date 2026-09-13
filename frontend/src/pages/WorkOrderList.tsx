@@ -596,8 +596,15 @@ export default function WorkOrderList() {
  const loadAllCustomersAndSitesForForms = async () => {
   try {
     const customerResponse = await client.get('/customers?size=200');
-    setCustomers(getList<Customer>(customerResponse.data));
-    setAllSites([]);
+    const customerList = getList<Customer>(customerResponse.data);
+    setCustomers(customerList);
+    if (customerList.length > 0) {
+      const sitePromises = customerList.slice(0, 5).map(c =>
+        client.get(`/sites?customerId=${c.id}&size=200`).then(r => getList<Site>(r.data))
+      );
+      const siteArrays = await Promise.all(sitePromises);
+      setAllSites(siteArrays.flat());
+    }
   } catch (error) {
     console.error(error);
   }
@@ -608,7 +615,7 @@ export default function WorkOrderList() {
     try {
       const [summaryResponse, orderResponse] = await Promise.all([
         client.get('/reports/summary'),
-        client.get('/work-orders?size=5'),
+       client.get(role === 'TECHNICIAN' ? '/work-orders?size=5&assignedTo=me' : '/work-orders?size=5'),
       ]);
       setSummary(summaryResponse.data);
       setWorkOrders(getList<WorkOrder>(orderResponse.data));
@@ -902,10 +909,10 @@ export default function WorkOrderList() {
   );
 
   const sitesForWorkOrderCustomer = allSites.filter(
-    (site) =>
-      !woForm.customerId ||
-      String(site.customerId) === String(woForm.customerId),
-  );
+  (site) =>
+    !woForm.customerId ||
+    String((site as any).customerId ?? (site as any).customer?.id ?? '') === String(woForm.customerId),
+);
 
   const activeWorkOrders =
     (summary?.newCount ?? 0) +
@@ -1877,36 +1884,45 @@ export default function WorkOrderList() {
               </span>
               <span>Keystone</span>
             </div>
-            {navItems.map((item, index) => {
-              const Icon = item.icon;
-              return (
-                <div key={item.id}>
-                  {index === 4 && (
-                    <div className="workorder-nav-label">Reports</div>
-                  )}
-                  {index === 7 && (
-                    <div className="workorder-nav-label">Workspace</div>
-                  )}
-                  <button
-                    type="button"
-                    className={[
-                      'workorder-nav-button',
-                      page === item.id ? 'is-active' : '',
-                    ]
-                      .filter(Boolean)
-                      .join(' ')}
-                    style={navButtonStyle}
-                    onClick={() => navigateTo(item.id)}
-                  >
-                    <Icon
-                      size={17}
-                      strokeWidth={page === item.id ? 2.3 : 1.8}
-                    />
-                    <span>{item.label}</span>
-                  </button>
-                </div>
-              );
-            })}
+            {(() => {
+  const filtered = navItems.filter(item => {
+    if (role === 'CUSTOMER') return ['dashboard','workorders'].includes(item.id);
+    if (role === 'TECHNICIAN') return ['dashboard','workorders','timelogs','parts'].includes(item.id);
+    if (role === 'DISPATCHER') return ['dashboard','workorders','customers','sites','sla'].includes(item.id);
+    return true;
+  });
+  return filtered.map((item) => {
+    const Icon = item.icon;
+    const originalIndex = navItems.indexOf(item);
+    return (
+      <div key={item.id}>
+        {originalIndex === 4 && (role === 'MANAGER' || role === 'DISPATCHER') && (
+          <div className="workorder-nav-label">Reports</div>
+        )}
+        {originalIndex === 7 && role === 'MANAGER' && (
+          <div className="workorder-nav-label">Workspace</div>
+        )}
+        <button
+          type="button"
+          className={[
+            'workorder-nav-button',
+            page === item.id ? 'is-active' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+          style={navButtonStyle}
+          onClick={() => navigateTo(item.id)}
+        >
+          <Icon
+            size={17}
+            strokeWidth={page === item.id ? 2.3 : 1.8}
+          />
+          <span>{item.label}</span>
+        </button>
+      </div>
+    );
+  });
+})()}
             <div className="workorder-sidebar-footer">
               <div className="workorder-profile">
                 <div className="workorder-avatar">{profileInitial}</div>

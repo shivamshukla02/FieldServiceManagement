@@ -21,4 +21,11 @@ public class PartController {
     public ResponseEntity<List<Part>> getAll() {
         return ResponseEntity.ok(partRepository.findAll());
     }
+
+    @DeleteMapping("/{id}")
+@PreAuthorize("hasAnyRole('MANAGER', 'DISPATCHER')")
+public ResponseEntity<Void> delete(@PathVariable Long id) {
+    partRepository.deleteById(id);
+    return ResponseEntity.noContent().build();
+}
 }

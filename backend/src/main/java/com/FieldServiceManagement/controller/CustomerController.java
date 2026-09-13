@@ -21,7 +21,7 @@ public class CustomerController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('DISPATCHER', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('DISPATCHER', 'MANAGER', 'TECHNICIAN', 'CUSTOMER')")
     public ResponseEntity<CustomerResponse> create(@Valid @RequestBody CustomerRequest request) {
         return ResponseEntity.ok(customerService.create(request));
     }
