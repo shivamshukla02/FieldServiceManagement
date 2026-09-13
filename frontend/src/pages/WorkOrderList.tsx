@@ -593,18 +593,15 @@ export default function WorkOrderList() {
     window.setTimeout(() => setToast(''), 3000);
   };
 
-  const loadAllCustomersAndSitesForForms = async () => {
-    try {
-      const [customerResponse, siteResponse] = await Promise.all([
-        client.get('/customers?size=200'),
-        client.get('/sites?size=200'),
-      ]);
-      setCustomers(getList<Customer>(customerResponse.data));
-      setAllSites(getList<Site>(siteResponse.data));
-    } catch (error) {
-      console.error(error);
-    }
-  };
+ const loadAllCustomersAndSitesForForms = async () => {
+  try {
+    const customerResponse = await client.get('/customers?size=200');
+    setCustomers(getList<Customer>(customerResponse.data));
+    setAllSites([]);
+  } catch (error) {
+    console.error(error);
+  }
+};
 
   const loadDashboard = async () => {
     setLoad('dashboard', true);
@@ -682,7 +679,7 @@ export default function WorkOrderList() {
   const loadPartsInventory = async () => {
     setLoad('parts', true);
     try {
-      const response = await client.get('/parts/inventory');
+      const response = await client.get('/parts');
       setPartsInventory(getList<PartRow>(response.data));
     } catch (error) {
       console.error(error);
@@ -836,7 +833,7 @@ export default function WorkOrderList() {
       return;
     }
     try {
-      await client.post('/parts/inventory', {
+      await client.post('/parts', {
         sku: partForm.sku.trim(),
         name: partForm.name.trim(),
         unitCost,
@@ -866,7 +863,7 @@ export default function WorkOrderList() {
       const identifier = partToDelete.id
         ? String(partToDelete.id)
         : encodeURIComponent(partToDelete.sku);
-      await client.delete(`/parts/inventory/${identifier}`);
+      await client.delete(`/parts/${identifier}`);
       setPartsInventory((previous) =>
         previous.filter(
           (part) =>
