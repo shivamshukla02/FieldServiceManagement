@@ -4,19 +4,15 @@ import {
   ArrowRight,
   BarChart3,
   Building2,
-  CalendarClock,
   Check,
   CheckCircle2,
-  ChevronDown,
   ClipboardList,
   Clock3,
   Copy,
   HardHat,
   LayoutDashboard,
-  ListFilter,
   LogOut,
   Moon,
-  MoreHorizontal,
   Package,
   Plus,
   Search,
@@ -2171,13 +2167,7 @@ export default function WorkOrderList() {
                         placeholder="Search code, title, customer or site"
                       />
                     </div>
-                    <button
-                      type="button"
-                      className="workorder-secondary-button"
-                    >
-                      <ListFilter size={15} />
-                      Filter
-                    </button>
+                    
                   </div>
                   <section className="workorder-table-panel">
                     <Table
@@ -2429,14 +2419,7 @@ export default function WorkOrderList() {
                         Stay ahead of jobs that need a little more attention.
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      className="workorder-secondary-button"
-                    >
-                      <CalendarClock size={15} />
-                      Current view
-                      <ChevronDown size={14} />
-                    </button>
+                   
                   </div>
                   <div className="workorder-section-grid workorder-stats-grid">
                     <MetricCard
@@ -2730,13 +2713,7 @@ export default function WorkOrderList() {
                                 'No description provided.'}
                             </p>
                           </div>
-                          <button
-                            type="button"
-                            className="workorder-icon-button"
-                            aria-label="More work order actions"
-                          >
-                            <MoreHorizontal size={17} />
-                          </button>
+                          
                         </div>
                         <div className="workorder-detail-statuses">
                           <StatusPill status={selectedWO.status} />
