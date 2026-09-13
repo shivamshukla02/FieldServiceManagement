@@ -56,7 +56,7 @@ public class SiteService {
         );
     }
 
-    public Page<SiteResponse> listAll(Pageable pageable) {
+   public Page<SiteResponse> listAll(Pageable pageable) {
     return siteRepository.findAll(pageable).map(this::toResponse);
 }
 

@@ -36,9 +36,7 @@ public ResponseEntity<?> listByCustomer(
     }
     return ResponseEntity.ok(siteService.listAll(pageable));
 }
-public Page<SiteResponse> listAll(Pageable pageable) {
-    return siteRepository.findAll(pageable).map(this::toResponse);
-}
+
 
     @GetMapping("/{id}")
     public ResponseEntity<SiteResponse> getById(@PathVariable Long id) {
