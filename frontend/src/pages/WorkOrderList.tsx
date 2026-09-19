@@ -2716,6 +2716,7 @@ export default function WorkOrderList() {
                           
                         </div>
                         <div className="workorder-detail-statuses">
+                          <div style={{fontSize:11,color:'red'}}>DEBUG role: {role} | status: {selectedWO.status}</div>
                           <StatusPill status={selectedWO.status} />
                           <SlaPill value={selectedWO.slaStatus} />
                           <PriorityPill priority={selectedWO.priority} />
