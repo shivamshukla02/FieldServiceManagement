@@ -611,7 +611,7 @@ export default function WorkOrderList() {
     try {
       const [summaryResponse, orderResponse] = await Promise.all([
         client.get('/reports/summary'),
-       client.get(role === 'TECHNICIAN' ? '/work-orders?size=5&assignedTo=me' : '/work-orders?size=5'),
+       client.get('/work-orders?size=5'),
       ]);
       setSummary(summaryResponse.data);
       setWorkOrders(getList<WorkOrder>(orderResponse.data));
