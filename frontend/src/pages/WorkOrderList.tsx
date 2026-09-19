@@ -2716,7 +2716,6 @@ export default function WorkOrderList() {
                           
                         </div>
                         <div className="workorder-detail-statuses">
-                          <div style={{fontSize:11,color:'red'}}>DEBUG role: {role} | status: {selectedWO.status}</div>
                           <StatusPill status={selectedWO.status} />
                           <SlaPill value={selectedWO.slaStatus} />
                           <PriorityPill priority={selectedWO.priority} />
@@ -2726,6 +2725,7 @@ export default function WorkOrderList() {
                         {(() => {
                           const s = selectedWO.status;
                           const transitions: { label: string; toStatus: string; allowed: string[] }[] = [
+                            { label: 'Assign to Technician', toStatus: 'ASSIGNED', allowed: ['DISPATCHER', 'MANAGER'] },
                             { label: 'Start Work', toStatus: 'IN_PROGRESS', allowed: ['TECHNICIAN'] },
                             { label: 'Put On Hold', toStatus: 'ON_HOLD', allowed: ['TECHNICIAN'] },
                             { label: 'Resume', toStatus: 'IN_PROGRESS', allowed: ['TECHNICIAN'] },
@@ -2734,6 +2734,7 @@ export default function WorkOrderList() {
                             { label: 'Cancel', toStatus: 'CANCELLED', allowed: ['MANAGER', 'DISPATCHER'] },
                           ];
                           const allowed: Record<string, string[]> = {
+                            NEW: ['ASSIGNED', 'CANCELLED'],
                             ASSIGNED: ['IN_PROGRESS', 'CANCELLED'],
                             IN_PROGRESS: ['ON_HOLD', 'COMPLETED'],
                             ON_HOLD: ['IN_PROGRESS'],
@@ -2753,10 +2754,16 @@ export default function WorkOrderList() {
                                   className="workorder-primary-button"
                                   onClick={async () => {
                                     try {
-                                      await client.post(`/work-orders/${selectedWO.id}/status`, {
-                                        toStatus: t.toStatus,
-                                        note: '',
-                                      });
+                                      if (t.toStatus === 'ASSIGNED') {
+                                        await client.post(`/work-orders/${selectedWO.id}/assign`, {
+                                          technicianId: 2,
+                                        });
+                                      } else {
+                                        await client.post(`/work-orders/${selectedWO.id}/status`, {
+                                          toStatus: t.toStatus,
+                                          note: '',
+                                        });
+                                      }
                                       const updated = await client.get(`/work-orders/${selectedWO.id}`);
                                       setSelectedWO(updated.data);
                                       const hist = await client.get(`/work-orders/${selectedWO.id}/history`);
