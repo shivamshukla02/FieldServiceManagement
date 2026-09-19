@@ -23,8 +23,8 @@ The **Field Service Management (FSM)** platform streamlines the entire lifecycle
 
 | Service | URL |
 |---|---|
-| Frontend | https://innovative-wholeness-production-403a.up.railway.app |
-| Backend API | https://fieldservicemanagement-production.up.railway.app |
+| Frontend | https://field-service-management-dun.vercel.app/work-orders |
+| Backend API | https://keystone-backend-eh5g.onrender.com |
 | Swagger UI | https://fieldservicemanagement-production.up.railway.app/swagger-ui/index.html |
 
 ## Seed Logins
