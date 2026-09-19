@@ -12,8 +12,10 @@ import java.util.function.Function;
 public class JwtUtil {
 
     private final SecretKey key = Keys.hmacShaKeyFor(
-        "keystone-super-secret-key-change-this-in-production-1234567890".getBytes()
-    );
+    java.util.Optional.ofNullable(System.getenv("JWT_SECRET"))
+        .orElse("keystone-super-secret-key-change-this-in-production-1234567890")
+        .getBytes()
+);
 
     private final long expirationMs = 1000 * 60 * 60 * 24; // 24 hours
 
