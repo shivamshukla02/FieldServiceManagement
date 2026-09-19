@@ -2720,6 +2720,59 @@ export default function WorkOrderList() {
                           <SlaPill value={selectedWO.slaStatus} />
                           <PriorityPill priority={selectedWO.priority} />
                         </div>
+
+                        {/* transition buttons */}
+                        {(() => {
+                          const s = selectedWO.status;
+                          const transitions: { label: string; toStatus: string; allowed: string[] }[] = [
+                            { label: 'Start Work', toStatus: 'IN_PROGRESS', allowed: ['TECHNICIAN'] },
+                            { label: 'Put On Hold', toStatus: 'ON_HOLD', allowed: ['TECHNICIAN'] },
+                            { label: 'Resume', toStatus: 'IN_PROGRESS', allowed: ['TECHNICIAN'] },
+                            { label: 'Mark Complete', toStatus: 'COMPLETED', allowed: ['TECHNICIAN'] },
+                            { label: 'Close Job', toStatus: 'CLOSED', allowed: ['MANAGER'] },
+                            { label: 'Cancel', toStatus: 'CANCELLED', allowed: ['MANAGER', 'DISPATCHER'] },
+                          ];
+                          const allowed: Record<string, string[]> = {
+                            ASSIGNED: ['IN_PROGRESS', 'CANCELLED'],
+                            IN_PROGRESS: ['ON_HOLD', 'COMPLETED'],
+                            ON_HOLD: ['IN_PROGRESS'],
+                            COMPLETED: ['CLOSED'],
+                          };
+                          const next = allowed[s] || [];
+                          const visible = transitions.filter(t =>
+                            next.includes(t.toStatus) && t.allowed.includes(role || '')
+                          );
+                          if (visible.length === 0) return null;
+                          return (
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 14 }}>
+                              {visible.map(t => (
+                                <button
+                                  key={t.toStatus}
+                                  type="button"
+                                  className="workorder-primary-button"
+                                  onClick={async () => {
+                                    try {
+                                      await client.post(`/work-orders/${selectedWO.id}/status`, {
+                                        toStatus: t.toStatus,
+                                        note: '',
+                                      });
+                                      const updated = await client.get(`/work-orders/${selectedWO.id}`);
+                                      setSelectedWO(updated.data);
+                                      const hist = await client.get(`/work-orders/${selectedWO.id}/history`);
+                                      setWoHistory(getList<HistoryItem>(hist.data));
+                                      showToast(`Status updated to ${t.toStatus.replace('_', ' ')}`);
+                                    } catch (e: any) {
+                                      showToast(extractErrorMessage(e, 'Transition failed'));
+                                    }
+                                  }}
+                                >
+                                  {t.label}
+                                </button>
+                              ))}
+                            </div>
+                          );
+                        })()}
+
                         <div className="workorder-detail-grid">
                           <div className="workorder-detail-stat">
                             <span>Customer</span>
