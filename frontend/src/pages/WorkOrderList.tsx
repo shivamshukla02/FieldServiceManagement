@@ -2755,9 +2755,11 @@ export default function WorkOrderList() {
                                   onClick={async () => {
                                     try {
                                       if (t.toStatus === 'ASSIGNED') {
-                                        await client.post(`/work-orders/${selectedWO.id}/assign`, {
-                                          technicianId: 2,
-                                        });
+                                        const techId = window.prompt('Enter technician ID to assign:');
+if (!techId) return;
+await client.post(`/work-orders/${selectedWO.id}/assign`, {
+  technicianId: Number(techId),
+});
                                       } else {
                                         await client.post(`/work-orders/${selectedWO.id}/status`, {
                                           toStatus: t.toStatus,
