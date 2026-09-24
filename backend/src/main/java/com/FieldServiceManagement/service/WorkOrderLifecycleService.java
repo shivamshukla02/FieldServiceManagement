@@ -79,8 +79,8 @@ public class WorkOrderLifecycleService {
         // if technician-only transition, verify it's THEIR assigned job
         if (allowedRoles.contains("TECHNICIAN") && currentUser.getRole().equals("TECHNICIAN")) {
             if (wo.getAssignedTo() == null || !wo.getAssignedTo().getId().equals(currentUser.getId())) {
-                throw new SecurityException("Technician can only act on their own assigned work orders");
-            }
+    throw new SecurityException("Technician can only act on their own assigned work orders");
+}
         }
 
         // apply the change
