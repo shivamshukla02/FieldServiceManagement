@@ -25,7 +25,7 @@ The **Field Service Management (FSM)** platform streamlines the entire lifecycle
 |---|---|
 | Frontend | https://field-service-management-dun.vercel.app/work-orders |
 | Backend API | https://keystone-backend-eh5g.onrender.com |
-| Swagger UI | https://fieldservicemanagement-production.up.railway.app/swagger-ui/index.html |
+| Swagger UI | https://keystone-backend-eh5g.onrender.com/swagger-ui/index.html |
 
 ## Seed Logins
 
