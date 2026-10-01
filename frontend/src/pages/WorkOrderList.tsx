@@ -2756,7 +2756,7 @@ export default function WorkOrderList() {
                                     try {
                                       if (t.toStatus === 'ASSIGNED') {
                                         await client.post(`/work-orders/${selectedWO.id}/assign`, {
-  technicianId: 1,
+  technicianId: 2,
 });
                                       } else {
                                         await client.post(`/work-orders/${selectedWO.id}/status`, {
