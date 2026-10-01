@@ -19,6 +19,7 @@ export default function Login() {
         email,
         password,
       });
+      console.log('LOGIN RESPONSE:', res.data);
       login(
         res.data.token,
         res.data.email,
