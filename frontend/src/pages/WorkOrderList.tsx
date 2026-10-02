@@ -2724,22 +2724,21 @@ export default function WorkOrderList() {
                         {/* transition buttons */}
                         {(() => {
                           const s = selectedWO.status;
-                          const transitions: { label: string; toStatus: string; allowed: string[] }[] = [
-                            { label: 'Assign to Technician', toStatus: 'ASSIGNED', allowed: ['DISPATCHER', 'MANAGER'] },
-                            { label: 'Start Work', toStatus: 'IN_PROGRESS', allowed: ['TECHNICIAN'] },
-                            { label: 'Put On Hold', toStatus: 'ON_HOLD', allowed: ['TECHNICIAN'] },
-                            { label: 'Resume', toStatus: 'IN_PROGRESS', allowed: ['TECHNICIAN'] },
-                            { label: 'Mark Complete', toStatus: 'COMPLETED', allowed: ['TECHNICIAN'] },
-                            { label: 'Close Job', toStatus: 'CLOSED', allowed: ['MANAGER'] },
-                            { label: 'Cancel', toStatus: 'CANCELLED', allowed: ['MANAGER', 'DISPATCHER'] },
-                          ];
-                          const allowed: Record<string, string[]> = {
-                            NEW: ['ASSIGNED', 'CANCELLED'],
-                            ASSIGNED: ['IN_PROGRESS', 'CANCELLED'],
-                            IN_PROGRESS: ['ON_HOLD', 'COMPLETED'],
-                            ON_HOLD: ['IN_PROGRESS'],
-                            COMPLETED: ['CLOSED'],
-                          };
+                         const transitions: { label: string; toStatus: string; allowed: string[] }[] = [
+  { label: 'Assign to Technician', toStatus: 'ASSIGNED', allowed: ['DISPATCHER', 'MANAGER'] },
+  { label: 'Start Work', toStatus: 'IN_PROGRESS', allowed: ['TECHNICIAN'] },
+  { label: 'Put On Hold', toStatus: 'ON_HOLD', allowed: ['TECHNICIAN'] },
+  { label: 'Mark Complete', toStatus: 'COMPLETED', allowed: ['TECHNICIAN'] },
+  { label: 'Close Job', toStatus: 'CLOSED', allowed: ['MANAGER'] },
+  { label: 'Cancel', toStatus: 'CANCELLED', allowed: ['MANAGER', 'DISPATCHER'] },
+];
+                         const allowed: Record<string, string[]> = {
+  NEW: ['ASSIGNED', 'CANCELLED'],
+  ASSIGNED: ['IN_PROGRESS', 'CANCELLED'],
+  IN_PROGRESS: ['ON_HOLD', 'COMPLETED'],
+  ON_HOLD: ['IN_PROGRESS'],
+  COMPLETED: ['CLOSED'],
+};
                           const next = allowed[s] || [];
                           const visible = transitions.filter(t =>
                             next.includes(t.toStatus) && t.allowed.includes(role || '')
