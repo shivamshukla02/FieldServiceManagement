@@ -517,6 +517,7 @@ export default function WorkOrderList() {
   const [selectedWO, setSelectedWO] = useState<WorkOrder | null>(null);
   const [woHistory, setWoHistory] = useState<HistoryItem[]>([]);
   const [woParts, setWoParts] = useState<PartItem[]>([]);
+  const [attachments, setAttachments] = useState<any[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
   const [allSites, setAllSites] = useState<Site[]>([]);
@@ -698,6 +699,7 @@ export default function WorkOrderList() {
     setPage('wo-detail');
     setWoHistory([]);
     setWoParts([]);
+    setAttachments([]);
     try {
       const [historyResponse, partsResponse] = await Promise.all([
         client.get(`/work-orders/${order.id}/history`),
@@ -705,6 +707,8 @@ export default function WorkOrderList() {
       ]);
       setWoHistory(getList<HistoryItem>(historyResponse.data));
       setWoParts(getList<PartItem>(partsResponse.data));
+      const attRes = await client.get(`/attachments/work-order/${order.id}`);
+setAttachments(attRes.data || []);
     } catch (error) {
       console.error(error);
       showToast(
@@ -2866,6 +2870,65 @@ export default function WorkOrderList() {
                       </section>
                     </div>
                     <div className="workorder-section-grid">
+                      <section className="workorder-panel">
+  <div className="workorder-panel-head">
+    <div>
+      <div className="workorder-panel-title">Attachments</div>
+      <div className="workorder-panel-subtitle">Photos and documents for this job</div>
+    </div>
+  </div>
+  <div style={{ marginBottom: 12 }}>
+    <input
+      type="file"
+      id="wo-file-upload"
+      style={{ display: 'none' }}
+      accept="image/png,image/jpeg,image/jpg,video/mp4,application/pdf"
+      onChange={async (e) => {
+        const file = e.target.files?.[0];
+        if (!file || !selectedWO) return;
+        const formData = new FormData();
+        formData.append('file', file);
+        try {
+          await client.post(`/attachments/upload/${selectedWO.id}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
+          showToast('File uploaded successfully!');
+          // reload attachments
+          const res = await client.get(`/attachments/work-order/${selectedWO.id}`);
+          setAttachments(res.data || []);
+        } catch (e: any) {
+          showToast(extractErrorMessage(e, 'Upload failed'));
+        }
+        e.target.value = '';
+      }}
+    />
+    <button
+      type="button"
+      className="workorder-secondary-button"
+      onClick={() => document.getElementById('wo-file-upload')?.click()}
+    >
+      Upload file
+    </button>
+  </div>
+  {attachments.length === 0 ? (
+    <div className="workorder-empty">
+      <h3>No attachments</h3>
+      <p>Upload photos or documents related to this job</p>
+    </div>
+  ) : (
+    attachments.map((att: any) => (
+      <div key={att.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderTop: '1px solid var(--line)' }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{att.fileName}</div>
+          <div style={{ fontSize: 11, color: 'var(--muted)' }}>{(att.sizeOfFile / 1024).toFixed(1)} KB</div>
+        </div>
+        <a href={att.storagePath} target="_blank" rel="noopener noreferrer" className="workorder-secondary-button" style={{ fontSize: 12 }}>
+          View
+        </a>
+      </div>
+    ))
+  )}
+</section>
                       <section className="workorder-panel">
                         <div className="workorder-panel-head">
                           <div>
